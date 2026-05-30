@@ -1,0 +1,193 @@
+@mixin styles {
+  color-scheme: light;
+
+  /* Framework color */
+  --main-bg: #f5e7e6;
+  --mask-bg: #d8c7c5;
+  --main-border-color: #ddc7c5;
+
+  /* Common color */
+  --text-color: #2E364D;
+  --text-muted-color: #898696;
+  --text-muted-highlight-color: #70565F;
+  --heading-color: #2E364D;
+  --label-color: #70565F;
+  --blockquote-border-color: #70565F;
+  --blockquote-text-color: #70565F;
+  --link-color: #90645A;
+  --link-underline-color: rgb(144 100 90 / 20%);
+  --button-bg: #ffffff;
+  --btn-border-color: #d7c1bf;
+  --btn-backtotop-color: #2E364D;
+  --btn-backtotop-border-color: #e6d4d2;
+  --checkbox-color: #898696;
+  --checkbox-checked-color: #90645A;
+  --img-bg: radial-gradient(circle, rgba(225,201,200,0.85) 0%, rgba(255,255,255,1) 100%);
+  --shimmer-bg: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0%) 0%,
+    rgb(230 217 214 / 100%) 50%,
+    rgb(255 255 255 / 0%) 100%
+  );
+
+  /* Sidebar */
+  --site-title-color: #2E364D;
+  --site-subtitle-color: #70565F;
+  --sidebar-bg: #f7edea;
+  --sidebar-border-color: #ddc9c7;
+  --sidebar-muted-color: #898696;
+  --sidebar-active-color: #2E364D;
+  --sidebar-hover-bg: rgb(144 100 90 / 10%);
+  --sidebar-btn-bg: #efe0de;
+  --sidebar-btn-color: #2E364D;
+  --avatar-border-color: #ffffff;
+
+  /* Topbar */
+  --topbar-bg: rgb(241 229 227 / 88%);
+  --topbar-text-color: #2E364D;
+  --search-border-color: #e3d3d1;
+  --search-icon-color: #898696;
+  --input-focus-border-color: #70565F;
+
+  /* Home page */
+  --post-list-text-color: #2E364D;
+  --btn-patinator-text-color: #2E364D;
+  --btn-paginator-hover-color: #ece0de;
+
+  /* Posts */
+  --toc-highlight: #90645A;
+  --toc-popup-border-color: #d7c1bf;
+  --btn-share-color: #70565F;
+  --btn-share-hover-color: #2E364D;
+  --card-bg: #ffffff;
+  --card-hover-bg: #f3e8e7;
+  --card-shadow: rgb(46 54 77 / 8%) 0 2px 10px 0,
+    rgb(144 100 90 / 12%) 0 0 0 1px;
+  --footnote-target-bg: rgb(144 100 90 / 12%);
+  --tb-odd-bg: #fbf3f3;
+  --tb-border-color: #e3d3d1;
+  --dash-color: #70565F;
+  --kbd-wrap-color: #d8c2c3;
+  --kbd-text-color: #2E364D;
+  --kbd-bg-color: #f1e4e4;
+  --prompt-text-color: rgb(46 54 77 / 80%);
+  --prompt-tip-bg: rgb(144 100 90 / 12%);
+  --prompt-tip-icon-color: #90645A;
+  --prompt-info-bg: rgb(46 54 77 / 8%);
+  --prompt-info-icon-color: #2E364D;
+  --prompt-warning-bg: rgb(225 201 200 / 28%);
+  --prompt-warning-icon-color: #90645A;
+  --prompt-danger-bg: rgb(144 100 90 / 18%);
+  --prompt-danger-icon-color: #90544A;
+
+  /* Tags */
+  --tag-border: rgb(144 100 90 / 25%);
+  --tag-shadow: rgb(215 193 191 / 50%);
+  --tag-hover: rgb(144 100 90 / 12%);
+  --search-tag-bg: #f8efee;
+
+  /* Categories */
+  --categories-border: rgb(46 54 77 / 12%);
+  --categories-hover-bg: #f3e7e6;
+  --categories-icon-hover-color: #90645A;
+
+  /* Archive */
+  --timeline-color: rgb(46 54 77 / 20%);
+  --timeline-node-bg: #70565F;
+  --timeline-year-dot-color: #ffffff;
+
+  /* --- Custom code light mode colors --- */
+  --language-border-color: #d7c1bf;
+  --highlight-bg-color: #f7ecea;
+  --highlighter-rouge-color: #70565F;
+  --highlight-lineno-color: #898696;
+  --inline-code-bg: rgb(46 54 77 / 5%);
+  --code-color: #2E364D;
+  --code-header-text-color: #70565F;
+  --code-header-muted-color: #e3d3d1;
+  --code-header-icon-color: #c8b4b3;
+  --clipboard-checked-color: #90645A;
+
+  [class^='prompt-'] {
+    --link-underline-color: rgb(144 100 90 / 40%);
+  }
+
+  .dark {
+    display: none;
+  }
+
+  /* --- Syntax highlight theme --- */
+
+  .highlight table td {
+    padding: 5px;
+  }
+
+  .highlight table pre {
+    margin: 0;
+  }
+
+  .highlight,
+  .highlight .w {
+    color: #2E364D;
+    background-color: #f7ecea;
+  }
+
+  .highlight .k,
+  .highlight .kd,
+  .highlight .kn,
+  .highlight .kp,
+  .highlight .kr,
+  .highlight .kt,
+  .highlight .kv {
+    color: #90645A;
+  }
+
+  .highlight .c,
+  .highlight .ch,
+  .highlight .cm,
+  .highlight .cpf,
+  .highlight .c1,
+  .highlight .cs {
+    color: #898696;
+  }
+
+  .highlight .s,
+  .highlight .sa,
+  .highlight .sb,
+  .highlight .sc,
+  .highlight .sd,
+  .highlight .se,
+  .highlight .sh,
+  .highlight .si,
+  .highlight .sx,
+  .highlight .s1,
+  .highlight .ss {
+    color: #70565F;
+  }
+
+  .highlight .nb,
+  .highlight .nc,
+  .highlight .no,
+  .highlight .nn,
+  .highlight .nf,
+  .highlight .fm,
+  .highlight .mh,
+  .highlight .ni,
+  .highlight .nt,
+  .highlight .vc,
+  .highlight .vg,
+  .highlight .vi,
+  .highlight .vm {
+    color: #2E364D;
+  }
+
+  .highlight .gd {
+    color: #90645A;
+    background-color: rgba(144,100,90,0.12);
+  }
+
+  .highlight .err {
+    color: #f7ecea;
+    background-color: #90645A;
+  }
+}

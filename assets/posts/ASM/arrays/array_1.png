@@ -1,0 +1,15 @@
+### Example
+```
+section .data
+  NUMBER1 dw 1,2,3,4,5,6
+  NUMBER2 times 8 dw 0
+
+section .text
+  global _start
+
+_start:
+mov rax, [NUMBER1+2]
+
+mov rax,60  
+syscall
+```
