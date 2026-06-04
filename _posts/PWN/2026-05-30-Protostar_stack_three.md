@@ -8,7 +8,7 @@ toc: true
 ---
 
 ## Introduction
-I will be explaining how i did the challenge stack_two from the series Protostar found at <https://exploit.education/phoenix/stack-three/>
+I will be explaining how i did the challenge stack_three from the series Protostar found at <https://exploit.education/phoenix/stack-three/>
 
 ## Step one
 Before debugging it, i inspected the provided source code:

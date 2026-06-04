@@ -8,7 +8,7 @@ toc: true
 ---
 
 ## Introduction
-I will be explaining how i did the challenge stack_two from the series Protostar found at <https://exploit.education/phoenix/stack-three/>
+I will be explaining how i did the challenge stack_four from the series Protostar found at <https://exploit.education/phoenix/stack-four/>
 
 ## Step one
 Before debugging it, i inspected the provided source code:
@@ -83,6 +83,7 @@ Afterwards, i set the saved eip register value to the start of complete_level.
 ![](assets/posts/PWN/phoenix_stack_four/set.png)
 
 It works.
+
 ![](assets/posts/PWN/phoenix_stack_four/set2.png)
 
 
