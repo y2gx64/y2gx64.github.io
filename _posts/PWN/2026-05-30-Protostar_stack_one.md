@@ -66,11 +66,11 @@ Hence, my plan is to overflow from the variable buffer with the overflowed value
 ## Step two
 To test if this is possible i ran the program with the following argument:
 
-![](assets/posts/PWN/protostar_stack_one/overfow_test1.png)
+![](assets/posts/PWN/phoenix_stack_one/overfow_test1.png)
 
 This showed that a buffer overflow attack is definitely possible. Hence, i proceeded to ran it with the following argument:
 
-![](assets/posts/PWN/protostar_stack_one/flag.png)
+![](assets/posts/PWN/phoenix_stack_one/flag.png)
 
 
 
