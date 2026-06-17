@@ -3,12 +3,12 @@ title: Protostar - stack_zero
 date: 2026-05-30 00:00:00 +0800
 categories: [PWN]
 tags:      # TAG names should always be lowercase
-description: Protostar stack_zero ctf
+description: Phoenixstack_zero ctf
 toc: true
 ---
 
 ## Introduction
-I will be explaining how i did the challenge stack_zero from the series Protostar found at <https://exploit.education/phoenix/stack-zero/>
+I will be explaining how i did the challenge stack_zero from the series Phoenix found at <https://exploit.education/phoenix/stack-zero/>
 
 ## Step 1
 Firstly, i will load the binary in gdb to disassemble it. 

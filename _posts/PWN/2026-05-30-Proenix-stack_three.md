@@ -1,14 +1,14 @@
 ---
-title: Protostar - stack_three
+title: Phoenix - stack_three
 date: 2026-05-31 00:00:00 +0800
 categories: [PWN]
 tags:      # TAG names should always be lowercase
-description: Protostar stack_three ctf
+description: Phoenix stack_three challenge
 toc: true
 ---
 
 ## Introduction
-I will be explaining how i did the challenge stack_three from the series Protostar found at <https://exploit.education/phoenix/stack-three/>
+I will be explaining how i did the challenge stack_three from the series Phoenix found at <https://exploit.education/phoenix/stack-three/>
 
 ## Step one
 Before debugging it, i inspected the provided source code:
@@ -66,20 +66,20 @@ int main(int argc, char **argv) {
 
 
 ```
-It seems like a buffer overflow attack is used here. Based on `gets(local.buffer)` i assume an input is to be provided. This input must exceed 64 bytes so as to cause it to change `locals.fp`. So the plan is to firstly retrieve the address where the function complete_level is, provide a rigged input and it should work.
+It seems like a buffer overflow attack can be used based on the presence of __gets__. The input must exceed 64 bytes, causing `buffer` to overflow and changing the value of `locals.fp`. So the plan is to firstly retrieve the address where the function __complete_level__ is, provide a rigged input and it should work.
 
 
 ## Step two
-I set a command at main so that i can view the memory of the function. 
+I set a command at main so that i can view the memory address of the function __complete_level__  .
 
 ![](assets/posts/PWN/phoenix_stack_three/flagaddress.png)
 
-I cant just directly copy raw bytes into the terminal hence i will the output inside a file via the command:
+I can't just directly copy raw bytes into the terminal hence i will the output inside a file via the command:
 
 ```
 python3 -c 'import sys; sys.stdout.buffer.write(b"A" * 64 + b"\xbd\x61\x55\x56")' > stack_three_payload
 ```
-It is important to use `sys.stdout.buffer.write` due to python treating characters as unicode which may mess up the payload.Now, load the program via gdb and do the following:
+It is important to use `sys.stdout.buffer.write` due to python treating characters as unicode which may mess up the payload. Now, load the program via gdb and do the following:
 
 ![](assets/posts/PWN/phoenix_stack_three/flag.png)
 

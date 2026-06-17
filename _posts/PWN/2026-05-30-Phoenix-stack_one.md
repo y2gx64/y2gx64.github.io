@@ -1,17 +1,17 @@
 ---
-title: Protostar - stack_one
+title: Phoenix- stack_one
 date: 2026-05-30 00:00:00 +0800
 categories: [PWN]
 tags:      # TAG names should always be lowercase
-description: Protostar stack_one ctf
+description: Phoenix stack_one challenge
 toc: true
 ---
 
 ## introduction
-I will be explaining how i did the challenge stack_one from the series Protostar found at <https://exploit.education/phoenix/stack-one/>
+I will be explaining how i did the challenge stack_one from the series Phoenix found at <https://exploit.education/phoenix/stack-one/>
 
 ## Step one
-Before debugging it, i inspected the source code provided on their website and found that it was using `volatile`, `int` and `strcpy`. 
+Firstly, i inspected the source code provided on their website and found that it was using `volatile`, `int` and `strcpy`. 
 
 ```
 /*
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 }
 ```
 
-This suggests that the target, changeme is located right after the variable buffer. Secondly, the use of `strcpy` and not `strncpy` suggests that a buffer overflow attack is possible. 
+This suggests that the target, `changeme`` is located right after the variable buffer. Secondly, the use of __strcpy__ and not __strncpy__ suggests that a buffer overflow attack is possible. 
 
 Hence, my plan is to overflow from the variable buffer with the overflowed value being `\x62\x59\x6c\x49\`. 
 
