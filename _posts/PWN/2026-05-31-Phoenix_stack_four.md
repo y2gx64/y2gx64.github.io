@@ -1,14 +1,14 @@
 ---
-title: Protostar - stack_four
+title: Phoenix - stack_four
 date: 2026-05-30 00:00:00 +0800
 categories: [PWN]
 tags:      # TAG names should always be lowercase
-description: Protostar stack_four ctf
+description: Phoenix stack_four challenge
 toc: true
 ---
 
 ## Introduction
-I will be explaining how i did the challenge stack_four from the series Protostar found at <https://exploit.education/phoenix/stack-four/>
+I will be explaining how i did the challenge stack_four from the series Phoenix found at <https://exploit.education/phoenix/stack-four/>
 
 ## Step one
 Before debugging it, i inspected the provided source code:
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 This seems to be the same as before?
 
 ## Step two
-I will be setting a breakpoint at start_level to allow myself to retrieve the address of complete_level.
+I will be setting a breakpoint at __start_level__ to retrieve the address of __complete_level__ .
 
 ![](assets/posts/PWN/phoenix_stack_four/flagaddress.png)
 
@@ -67,6 +67,7 @@ I will be using the following command to set the payload:
 ```
 python3 -c 'import sys; sys.stdout.buffer.write(b"A" * 64 + b"\xad\x61\x55\x56")' > stack_four_payload
 ```
+
 ![](assets/posts/PWN/phoenix_stack_four/nowork.png)
 
 
@@ -74,15 +75,15 @@ And it does not work, seems that something else should be done instead. When loo
 
 ![](assets/posts/PWN/phoenix_stack_four/hint1.png)
 
-My plan is to now alter the stack right before return is called. So i set a breakpoint at start_level, followed with a breakpoint at ret.
+My plan is to now alter the stack right before __ret__ is called. So i set a breakpoint at __start_level__, followed with a breakpoint at __ret__.
 
 ![](assets/posts/PWN/phoenix_stack_four/break1.png)
 
-Afterwards, i set the saved eip register value to the start of complete_level.
+Afterwards, i set the saved eip register value to the start of __complete_level__.
 
 ![](assets/posts/PWN/phoenix_stack_four/set.png)
 
-It works.
+This leads to the challenge being completed.
 
 ![](assets/posts/PWN/phoenix_stack_four/set2.png)
 

@@ -1,14 +1,14 @@
 ---
-title: Protostar - stack_five
+title: Phoenix - stack_five
 date: 2026-05-30 00:00:00 +0800
 categories: [PWN]
 tags:      # TAG names should always be lowercase
-description: Protostar stack_five ctf
+description: Phoenix stack_five ctf
 toc: true
 ---
 
 ## Introduction
-I will be explaining how i did the challenge stack_five from the series Protostar found at <https://exploit.education/phoenix/stack-five/>
+I will be explaining how i did the challenge stack_five from the series Phoenix found at <https://exploit.education/phoenix/stack-five/>
 
 ## Step one
 Firstly, ensure that the stack is readable, writable and executable via:
@@ -17,7 +17,6 @@ Firstly, ensure that the stack is readable, writable and executable via:
 
 
 Before debugging it, i inspected the source code:
-
 
 ```
 
@@ -51,27 +50,24 @@ int main(int argc, char **argv) {
 
 ```
 
-My plan is to overflow buffer which would cause a memory address to 'leak' on the stack. Afterwards, this will be followed by a interrupt system call  to prove that shellcode is possible. 
+My plan is to overflow `buffer` which would cause the memory address to be on the stack. This memory address will then be loaded into EIP causing shell code to be executed.
 
 ## Step two - how it will work
 
-At this breakpoint, i can see that the topmost address on the stack is `0x565561ed`. This is followed with the esp being `0xffffd51c`. This means the stack address `0xffffd51c`, contains the address `0x565561ed` which will be loaded into EIP via `ret`. This can be abused to force the EIP to load another executable address which contains shellcode right after it. 
-`
+At this breakpoint, i can see that the topaddress on the stack is `0x565561ed`. This is followed with ESP being `0xffffd51c`. This means the stack address `0xffffd51c`containing the address `0x565561ed` will be loaded into EIP via __ret__.
 
 ![](assets/posts/PWN/phoenix_stack_five/ret_esp.png)
 
-At the next instruction, i can see its address is the same as the previous topmost value on the stack. This proves that i can potentially use the stack address `0xffffd51c` to load shellcode. 
+At the next instruction, i can see its address is the same as the previous top value on the stack. This proves that i can potentially use the stack address `0xffffd51c` to load shell code. 
 
 ![](assets/posts/PWN/phoenix_stack_five/after_ret.png)
 
 
 ## Step 3 - how much to overflow 
 
-To sucessfully load or "push" values onto the stack, i must overflow the variable buffer. My current payload generator script for this is:
+To successfully push values onto the stack, i must overflow `buffer`. My current payload generator script for this is:
 
 ```
-
-
 # overflow
 import struct
 import sys
@@ -91,7 +87,7 @@ I wll proceed to run stack_five via:
 run < stack_five_payload
 ```
 
-As seen below, I have sucessfully pushed values onto the stack. When refering back to my script, the overflowed values are `OOOO`. That means that anything after `N` will be overflowed onto the stack.
+As seen below, I have successfully pushed values onto the stack. When referring to my script, the overflowed values are `OOOO`. That means that anything after `N` will be overflowed onto the stack.
 
 
 ![](assets/posts/PWN/phoenix_stack_five/payload1.png)
@@ -120,9 +116,9 @@ Create the new payload and run with it. As seen in the image below, this works a
 
 
 ## Step 5 - getting a shell 
-Now that i know it works, it is time to load a shell. I will be also using a NOP slide for this. A NOP slide is a series of instruction that tells the CPU to do nothing and move on to the next. It's usually used to increase the chances the CPU executes the shellcode. 
+Now that i know it works, it is time to load a shell. I will be also using a NOP slide for this. A NOP slide is a series of instructions that tells the CPU to do nothing and move on to the next instruction. It's usually used to control the flow of execution for shell code. 
 
-A NOP slide will be used instead of the current static memory address to deal with situations where the stack changes (every situation). So instead of the static memory not working, the CPU will just read the NOP instruction on the stack and move on the next and the next. Eventually this leads to the shellcode. Hence, my script will now be:
+A NOP slide will be used instead of the current static memory address to deal with situations where the stack changes (every situation). So instead of the static memory not working, the CPU will just read the NOP instruction on the stack and move on the next and the next. Eventually this leads to the shell code. Hence, my script will now be:
 
 ```
 # overflow

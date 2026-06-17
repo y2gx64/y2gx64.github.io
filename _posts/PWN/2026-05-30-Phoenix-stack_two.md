@@ -1,14 +1,14 @@
 ---
-title: Protostar - stack_two
+title: Phoenix - stack_two
 date: 2026-05-30 00:00:00 +0800
 categories: [PWN]
 tags:      # TAG names should always be lowercase
-description: Protostar stack_two ctf
+description: Phoenix stack_two challenge
 toc: true
 ---
 
 ## Introduction
-I will be explaining how i did the challenge stack_two from the series Protostar found at <https://exploit.education/phoenix/stack-two/>
+I will be explaining how i did the challenge stack_two from the series Phoenix found at <https://exploit.education/phoenix/stack-two/>
 
 ## Step one 
 Before debugging it, i will inspect the provided source code
@@ -63,10 +63,11 @@ int main(int argc, char **argv) {
 
 ```
 
-This is quite similar to the previous challenge except that the variable buffer gets it value from the environment variable ExploitEducation. The plan is simple, set the environment variable in a way that it overflows causing the value of changeme to be altered. 
+This is similar to the previous challenge except that `buffer` gets it value from the environment variable `ExploitEducation`. The plan is simple, set the environment variable in a way that it overflows causing the value of `changeme` to be altered. 
 
 ## Step two
-The following command was used to set the enviornment variable ExploitEducation:
+The following command was used to set the environment variable `ExploitEducation`:
+
 ```
 export ExploitEducation=$(python -c 'print("A"*64+"\x0a\x09\x0a\x0d")')
 ```
