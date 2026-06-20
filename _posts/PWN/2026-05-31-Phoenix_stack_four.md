@@ -55,37 +55,27 @@ int main(int argc, char **argv) {
 }
 
 ```
-This seems to be the same as before?
 
 ## Step two
-I will be setting a breakpoint at __start_level__ to retrieve the address of __complete_level__ .
+As __gets__ is used, this means an overflow is involved. I observed the behaviour of the stack when i used an input larger than 64 bytes. 
+![](assets/posts/PWN/phoenix_stack_four/stack1.png)
 
-![](assets/posts/PWN/phoenix_stack_four/flagaddress.png)
+I noticed the stack seems to contain the overflowed input. This gives me an idea to overwrite the RBP aka base address on the stack. To do this i needed to first determine where it is located. I disassembled __start_level__ to find out more.
 
-I will be using the following command to set the payload:
+The lines to look out for are those with `ebp-` in it. Due to how minus is adding more space on the stack and vice versa, the lines `[ebp-0x4c]` and `[ebp-0x4]` tells where the base return address is located on the stack. Adding the two values together gives 80 bytes. Hence the value after the 80 bytes should contain the base address. 
+
+![](assets/posts/PWN/phoenix_stack_four/disassembly.png)
+
+Hence my final payload will be:
 
 ```
-python3 -c 'import sys; sys.stdout.buffer.write(b"A" * 64 + b"\xad\x61\x55\x56")' > stack_four_payload
+import sys
+changeme = b"A"*76 #larger than size
+changeme += b"b"*4
+changeme += b"\xad\x61\x55\x56"
+sys.stdout.buffer.write(changeme)
 ```
-
-![](assets/posts/PWN/phoenix_stack_four/nowork.png)
-
-
-And it does not work, seems that something else should be done instead. When looking at the disassembled function, i noticed the following:
-
-![](assets/posts/PWN/phoenix_stack_four/hint1.png)
-
-My plan is to now alter the stack right before __ret__ is called. So i set a breakpoint at __start_level__, followed with a breakpoint at __ret__.
-
-![](assets/posts/PWN/phoenix_stack_four/break1.png)
-
-Afterwards, i set the saved eip register value to the start of __complete_level__.
-
-![](assets/posts/PWN/phoenix_stack_four/set.png)
-
-This leads to the challenge being completed.
-
-![](assets/posts/PWN/phoenix_stack_four/set2.png)
+![](assets/posts/PWN/phoenix_stack_four/flag.png)
 
 
 
