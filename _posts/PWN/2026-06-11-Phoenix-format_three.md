@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 }
 ```
 
-## Step two
+## Step two - determining __exit__ address
 Firstly, i need to know the memory address where the variable `changeme` is stored. This can be done via running "info var" in gdb as seen below.
 
 ![](assets/posts/PWN/phoenix_format_three/var.png)
@@ -72,7 +72,7 @@ At the breakpoint, i ran "x/32x" which showed the topmost 32 stack values. I not
 
 ![](assets/posts/PWN/phoenix_format_three/bp.png)
 
-As it is located at a 12 bytes offset, i used "%x" 12 times in my payload followed by "%n". This gives me the current payload of:
+As it is located at a 12 bytes offset, i used "%x" 11 times in my payload followed by "%n". This gives me the current payload of:
 
 ```
 changeme = b"\x20\x90\x55\x56" #target address

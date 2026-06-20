@@ -11,7 +11,7 @@ toc: true
 I will be explaining how i did the challenge stack_one from the series Phoenix found at <https://exploit.education/phoenix/stack-one/>
 
 ## Step one
-Firstly, i inspected the source code provided on their website and found that it was using `volatile`, `int` and `strcpy`. 
+Firstly, i inspected the source code provided on their website and found that it was using `volatile` and `strcpy`. 
 
 ```
 /*
