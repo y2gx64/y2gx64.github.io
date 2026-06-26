@@ -10,7 +10,7 @@ toc: true
 ## Introduction
 I will be explaining how i did the challenge stack_one from the series Phoenix found at <https://exploit.education/phoenix/stack-one/> but without referencing the source code this time. 
 
-## Disassembling the  source code 
+## Disassembling it 
 Firstly, i loaded the binary `stack-one.elf` using Ghidra, followed by jumping to the starting function and selecting graph view. 
 
 ![](assets/posts/PWN/phoenix_stack_one_ncs/fg.png)
