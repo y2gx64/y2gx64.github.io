@@ -1,5 +1,5 @@
 ---
-title: Protostar - format_zero, NCS
+title: Phoenix - format_zero, NCS
 date: 2026-06-27 00:00:00 +0800
 categories: [PWN]
 tags:      # TAG names should always be lowercase
