@@ -1,5 +1,5 @@
 ---
-title: "Night-Sterling.exe: Inno Setup dropper for a PyInstaller and PyArmor stealer"
+title: "PWS:Win32/UnknownFamily!exe(Night-Sterling.exe)"
 description: "`Night-Sterling.exe` is a 29,409,892-byte (28.0 MB) executable. Triage sample 261017-fla9lshx3q scored 7/10, \"Shows suspicious behavior\", across Windows 10 and Windows 11 runs. The tags include pyinstaller and installer."
 authors: [Y2GX64]
 category: Malware Analysis

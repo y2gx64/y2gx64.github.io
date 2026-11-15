@@ -1,5 +1,5 @@
 ---
-title: "BadRabbit: dropper, driver and locker execution chain"
+title: "Ransom:Win32/BadRabbit!exe(BadRabbit.exe)"
 description: "`BadRabbit.exe` is a 441,899-byte PE32 console executable with SHA-256 `630325ca…58d0da`. Its version information names \"Adobe Flash Player Installer/Uninstaller 27.0 r0\" and the original file name `FlashUtil.exe`. It was run on Windows 10 22H2 x64 from `C:\\binaries\\BadRabbit.exe`."
 authors: [Y2GX64]
 category: Malware Analysis

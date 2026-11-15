@@ -1,5 +1,5 @@
 ---
-title: "Cerber: 32-bit ransomware executable with a self-deleting batch file"
+title: "Ransom:Win32/Cerber!exe(Cerber.exe)"
 description: "`84cbffb8…ed12f973.exe` is a 764,928-byte 32-bit PE console executable, not packed, with a header timestamp of 2021-12-04 12:17:05 UTC (can be altered). Triage sample 261009-nzjf5svzdy scored it 10/10 and tagged it Cerber."
 authors: [Y2GX64]
 category: Malware Analysis

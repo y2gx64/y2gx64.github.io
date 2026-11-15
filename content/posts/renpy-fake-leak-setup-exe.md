@@ -1,5 +1,5 @@
 ---
-title: "Ren'Py game-leak lure: Go Setup.exe contacting two C2 servers"
+title: "PWS:Win32/Renpy!exe(Setup.exe)"
 description: "`Setup.exe` is a 4,479,344-byte 64-bit PE GUI executable built with Go 1.23.1, signed with a self-signed Authenticode certificate (`O=Vertex Grid`, valid from 2026-10-10). It is distributed inside `SGHL2026.zip` (146.0 MB) from a GitHub page presented as a game leak. Triage sample 261023-sptlkss16k scored 7/10."
 authors: [Y2GX64]
 category: Malware Analysis

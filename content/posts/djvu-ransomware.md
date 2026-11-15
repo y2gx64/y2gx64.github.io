@@ -1,5 +1,5 @@
 ---
-title: "Djvu (.tisc): 32-bit ransomware with a deny-delete ACL on its install folder"
+title: "Ransom:Win32/Djvu!exe(Djvu.exe)"
 description: "`djvu.exe` is a 775,168-byte 32-bit PE GUI executable with a header timestamp of 2021-04-08 06:10:32 UTC (can be altered). It was run once on a Windows 10 build 19041 VM with INetSim and no real internet. No hosted-sandbox report exists for this sample."
 authors: [Y2GX64]
 category: Malware Analysis

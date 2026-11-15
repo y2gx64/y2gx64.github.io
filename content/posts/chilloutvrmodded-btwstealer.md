@@ -1,5 +1,5 @@
 ---
-title: "BtwStealer: purported VRChat mods that deliver a Python stealer"
+title: "PWS:Win32/UnknownFamily!exe(chilloutvrmod)"
 description: "`chilloutvrmodded_launcher.bnuy` is a 9,793,536-byte PE file with an overlay (80.6 MB on disk), obtained from `chilloutvrmodded[.]net`, which presents it as mods for VRChat. Triage submissions 260902-p413esyset and 260903-enhk2aeg96 each scored 8/10."
 authors: [Y2GX64]
 category: Malware Analysis

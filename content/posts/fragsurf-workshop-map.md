@@ -1,5 +1,5 @@
 ---
-title: "Fragsurf Workshop map: Lua script that installs a Donut loader"
+title: "Stealer:Win32/UnknownFamily!bat(fs.bat)"
 description: "Steam Workshop item `3798408214`, a Fragsurf map whose `map.json` contains a `brush_scriptable` entity. Triage sample 260915-smxkfsyfnh (`to_triage.zip`) scored 10/10 with the family label DonutLoader. The payload host is `goawaythisisntforyou[.]com`."
 authors: [Y2GX64]
 category: Malware Analysis

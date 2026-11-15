@@ -1,5 +1,5 @@
 ---
-title: "Hytale-Examples-Plugin-v2.2: LuaJIT loader that uploads a desktop screenshot"
+title: "PWS:Win32/UnknownFamily!bat(Launch.bat)"
 description: "`Hytale-Examples-Plugin-v2.2.zip` is a 573 KB archive presented as a Hytale plugin pack. Triage sample 260911-syv6rsyvdw scored 7/10, \"Shows suspicious behavior\", on Windows 10 and Windows 11 runs."
 authors: [Y2GX64]
 category: Malware Analysis

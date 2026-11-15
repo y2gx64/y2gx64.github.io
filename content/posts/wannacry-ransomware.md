@@ -1,5 +1,5 @@
 ---
-title: "WannaCry: kill-switch check, ransomware toolkit and SMB scan"
+title: "Ransom:Win32/Wannacry!exe(wannacry.exe)"
 description: "`wannacry.exe` is a 3,723,264-byte PE32 file with SHA-256 `24d004a1…b1022c`. Triage sample 261025-nq1n3ag14l scored 10/10, \"Known bad\", with the family label Wannacry, on Windows 10 and Windows 11 runs."
 authors: [Y2GX64]
 category: Malware Analysis

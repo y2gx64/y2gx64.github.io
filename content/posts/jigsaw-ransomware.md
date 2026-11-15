@@ -1,5 +1,5 @@
 ---
-title: "Jigsaw: .NET ransomware with a static AES key and hourly file deletion"
+title: "Ransom:Win32/Jigsaw!_exe(Jigsaw.exe)"
 description: "`jigsaw.exe` is a 290,304-byte 32-bit .NET GUI executable protected with ConfuserEx v0.6.0 anti-tamper and Costura bundled assemblies. Triage sample 261010-j1dvtss19q scored 10/10 with the family label Jigsaw. The sample uses Firefox branding."
 authors: [Y2GX64]
 category: Malware Analysis

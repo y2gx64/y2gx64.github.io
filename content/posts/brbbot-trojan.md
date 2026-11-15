@@ -1,5 +1,5 @@
 ---
-title: "Brbbot: self-copying trojan with an RC4-encrypted configuration"
+title: "Trojan:Win32/Brbbot!exe(Brbbot.exe)"
 description: "`f47060d0…8f05034a21e.exe` is a 75,776-byte 64-bit PE file, not packed, with a header timestamp of 2015-02-25 06:12:18 UTC (can be altered). It was run on a Windows 10 x64 guest as administrator from `C:\\binaries\\brbbot\\`, with INetSim and Wireshark on a REMnux VM."
 authors: [Y2GX64]
 category: Malware Analysis

@@ -1,5 +1,5 @@
 ---
-title: "Ransom:Win32/Cryptolocker!exe"
+title: "Ransom:Win32/Cryptolocker!exe(Cryptolocker_2013.exe)"
 description: "`CryptoLocker_2013.exe` is a 346,112-byte 32-bit PE file with a header timestamp of 2013-09-07 14:57:57 UTC (can be altered) that carries CryptoLocker ransom-note resources. The name `Ransom:Win32/Cryptolocker!exe` comes from the analyst's case label. A January 2014 .NET sample that also uses the CryptoLocker name is covered in a separate post."
 authors: [Y2GX64]
 category: Malware Analysis
