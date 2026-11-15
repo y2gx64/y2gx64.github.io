@@ -1,23 +1,24 @@
 ---
-title: "Sample: what it does in one line"
-description: One or two sentences on what the post covers and what the reader will learn.
+title: "Type:Platform/Family.Variant!suffix"
+description: Background of the sample (size, architecture, header timestamp, self-reported name, relation to earlier builds), from the evidence only.
 authors: [Y2GX64]
 category: Malware Analysis
 date: YYYY-MM-DD
 ---
 
-*Analysis date: ... This post re-checks my report against ... so some details differ. The differences are listed at the end.*
+*Analysis date: ... This post re-checks the analyst's report against ... so some details differ. The differences are listed at the end.*
 
 ## Summary
 
 Paragraph 1: what the sample is and what it did.
 
-**Bold headline finding in one sentence.** Paragraph 2: what that means and what I cannot say.
+**Bold headline finding in one sentence.** Paragraph 2: what that means and what the evidence does not show.
 
 | | |
 |---|---|
 | Sample | |
 | SHA-256 | |
+| Detection-style name | |
 | Header timestamp | |
 | Environment | |
 | Evidence | |
