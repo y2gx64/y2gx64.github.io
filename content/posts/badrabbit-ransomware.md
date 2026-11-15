@@ -1,18 +1,18 @@
 ---
-title: "Bad Rabbit: a fake Flash installer, a borrowed disk-encryption driver and a worm that found nobody to infect"
-description: A walk through BadRabbit.exe from launch to lock screen, built from my own lab analysis with Process Monitor, Regshot and a packet capture. Covers the full process chain, what the capture does and does not show, corrections to my first report, and YARA rules tested against the sample.
+title: "BadRabbit: dropper, driver and locker execution chain"
+description: "`BadRabbit.exe` is a 441,899-byte PE32 console executable with SHA-256 `630325ca…58d0da`. Its version information names \"Adobe Flash Player Installer/Uninstaller 27.0 r0\" and the original file name `FlashUtil.exe`. It was run on Windows 10 22H2 x64 from `C:\\binaries\\BadRabbit.exe`."
 authors: [Y2GX64]
 category: Malware Analysis
 date: 2026-10-26
 ---
 
-*Analysis dates: the detonation and packet capture ran on 10 August 2026 on an isolated Windows 10 VM; static and code analysis followed, and my report went to version 2 on 28 August 2026. Screenshots are from that work. This post re-checks the report against the raw Procmon, Regshot and Wireshark files, so a few numbers differ from the PDF. Those differences are listed below.*
+*Analysis dates: the detonation and packet capture ran on 10 August 2026 on an isolated Windows 10 VM; static and code analysis followed, and the analyst's report went to version 2 on 28 August 2026. Screenshots are from that work. This post re-checks the report against the raw Procmon, Regshot and Wireshark files, so a few numbers differ from the PDF. Those differences are listed below.*
 
 ## Summary
 
 Bad Rabbit is the ransomware that spread from compromised Russian and Ukrainian websites in October 2017 by posing as an Adobe Flash update. It is a dropper wrapped around three things: a DLL that does the installation and tries to spread, a lock-screen program that takes over the boot process, and a legitimate open-source disk-encryption driver turned to malicious use.
 
-On my VM the sample finished its installation in about three seconds. It wrote a DLL, a driver and a locker into `C:\Windows`, registered the driver as a boot-start service, and created two scheduled tasks: one that launches the locker at every boot and one that forces a reboot. A discovery sweep of the local /24 began at the same moment. Nothing on that network answered, so the **capture contains no lateral movement at all**, only ARP requests, unanswered name lookups and TCP SYNs that were refused. My captures stop before the reboot, so the ransom screen comes from my screenshots and the strings in the locker, not from telemetry.
+On the local VM the sample finished its installation in about three seconds. It wrote a DLL, a driver and a locker into `C:\Windows`, registered the driver as a boot-start service, and created two scheduled tasks: one that launches the locker at every boot and one that forces a reboot. A discovery sweep of the local /24 began at the same moment. Nothing on that network answered, so the **capture contains no lateral movement at all**, only ARP requests, unanswered name lookups and TCP SYNs that were refused. The analyst's captures stop before the reboot, so the ransom screen comes from the analyst's screenshots and the strings in the locker, not from telemetry.
 
 | | |
 |---|---|
@@ -33,7 +33,7 @@ A standalone, print-ready execution-chain report with every command line, regist
 - **Boot-trigger scheduled task.** A task with an `ONSTART` trigger runs as SYSTEM every time Windows starts, before anyone logs in.
 - **Filter drivers.** Windows lets drivers sit above or below the disk and volume drivers and see every read and write. Registering a driver in the right filter list is how disk-encryption software gets in the path.
 - **DiskCryptor.** An open-source full-disk encryption tool (`dcrypt.sys`). Bad Rabbit ships a copy and uses it to encrypt the disk at the driver level.
-- **Background Activity Moderator (BAM).** A Windows registry record of when each program last ran. It matters here because it gives an exact start time, and because my first report misread it.
+- **Background Activity Moderator (BAM).** A Windows registry record of when each program last ran. It matters here because it gives an exact start time, and because the analyst's first report misread it.
 
 ## High-level overview
 
@@ -43,7 +43,7 @@ A standalone, print-ready execution-chain report with every command line, regist
 
 ### Files
 
-All full paths were seen in Procmon. Hashes are for the files I recovered. `infpub.dat` was carved from the sample because I did not hash the dropped copy.
+All full paths were seen in Procmon. Hashes are for the files the analyst recovered. `infpub.dat` was carved from the sample because the analyst did not hash the dropped copy.
 
 | Path | SHA-256 | Role |
 |---|---|---|
@@ -68,7 +68,7 @@ From the Regshot diff, 577 changes in total.
 | `HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e965-e325-11ce-bfc1-08002be10318}\UpperFilters` | `cscc` added | CD-ROM class filter |
 | `HKLM\SYSTEM\CurrentControlSet\Control\CrashControl\DumpFilters` | `cscc` added in front of `dumpfve.sys` | Crash-dump path |
 
-No Run, RunOnce, Winlogon or Image File Execution Options key changed. The rest of the diff is Explorer view state, notification and search bookkeeping, a certificate added by Windows, and keys written by my own analysis tools.
+No Run, RunOnce, Winlogon or Image File Execution Options key changed. The rest of the diff is Explorer view state, notification and search bookkeeping, a certificate added by Windows, and keys written by the analyst's analysis tools.
 
 ### Mutexes
 
@@ -104,7 +104,7 @@ No external IP address, answered DNS query or completed TCP connection appears i
 
 ### 1. Start
 
-I ran the sample from `C:\binaries`. Windows recorded the start in BAM at 07:04:21.854 UTC and cached the name "Adobe Flash Player Installer/Uninstaller 27.0 r0" in MuiCache, which shows the disguise worked at the shell level. In the capture, only spanning-tree frames occur between 56.06 s and 58.11 s.
+The analyst ran the sample from `C:\binaries`. Windows recorded the start in BAM at 07:04:21.854 UTC and cached the name "Adobe Flash Player Installer/Uninstaller 27.0 r0" in MuiCache, which shows the disguise worked at the shell level. In the capture, only spanning-tree frames occur between 56.06 s and 58.11 s.
 
 ### 2. Unpack the DLL
 
@@ -116,7 +116,7 @@ The sample's overlay holds four zlib streams. Detect It Easy's extractor lists t
 
 ### 3. Run it
 
-The dropper builds `%ws C:\Windows\%ws,#1 %ws` with `wsprintfW`, then calls `CreateProcessW`. The result is `rundll32.exe C:\Windows\infpub.dat,#1 15`, run by the 32-bit `rundll32` with a console host beside it. I do not know what `15` means. The DLL contains a `Sleep(minutes × 60000)` ahead of a shutdown routine, so a delay in minutes is plausible, but I did not tie the two together.
+The dropper builds `%ws C:\Windows\%ws,#1 %ws` with `wsprintfW`, then calls `CreateProcessW`. The result is `rundll32.exe C:\Windows\infpub.dat,#1 15`, run by the 32-bit `rundll32` with a console host beside it. The analyst does not know what `15` means. The DLL contains a `Sleep(minutes × 60000)` ahead of a shutdown routine, so a delay in minutes is plausible, but the analyst did not tie the two together.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Building the command</div><div class="fig-sub">IDA, wsprintfW with the rundll32 template</div></div><div class="fig-draw"><img src="/shared/img/badrabbit/code-rundll32.jpg" alt="Disassembly passing infpub.dat and the format string ws C:\Windows\ws,#1 ws to wsprintfW" width="591" height="271" loading="lazy" /></div></figure>
 
@@ -126,7 +126,7 @@ The DLL enables `SeShutdownPrivilege`, `SeDebugPrivilege` and `SeTcbPrivilege`, 
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Privileges first</div><div class="fig-sub">IDA, privilege adjustment in infpub.dat</div></div><div class="fig-draw"><img src="/shared/img/badrabbit/code-privileges.jpg" alt="Disassembly of the privilege routine referencing SeShutdownPrivilege, SeDebugPrivilege and SeTcbPrivilege" width="419" height="513" loading="lazy" /></div></figure>
 
-<figure class="art-fig"><div class="fig-head"><div class="fig-title">Files and child processes</div><div class="fig-sub">ProcDOT graph from my Procmon capture</div></div><div class="fig-draw"><img src="/shared/img/badrabbit/procdot-drops.jpg" alt="ProcDOT graph with a thread creating the files C:\Windows\cscc.dat and C:\Windows\dispci.exe and three cmd.exe processes with PIDs 2300, 64 and 3964" width="764" height="613" loading="lazy" /></div></figure>
+<figure class="art-fig"><div class="fig-head"><div class="fig-title">Files and child processes</div><div class="fig-sub">ProcDOT graph from the Procmon capture</div></div><div class="fig-draw"><img src="/shared/img/badrabbit/procdot-drops.jpg" alt="ProcDOT graph with a thread creating the files C:\Windows\cscc.dat and C:\Windows\dispci.exe and three cmd.exe processes with PIDs 2300, 64 and 3964" width="764" height="613" loading="lazy" /></div></figure>
 
 ### 5. Register the driver
 
@@ -136,27 +136,27 @@ The DLL enables `SeShutdownPrivilege`, `SeDebugPrivilege` and `SeTcbPrivilege`, 
 
 ### 6. Schedule the next stages
 
-Three commands run through `cmd.exe`: delete `rhaegal` if it exists, create `rhaegal` to run `dispci.exe -id 3051760386` as SYSTEM at startup, and create `drogon` to run `shutdown.exe /r /t 0 /f` once at 00:22:00. Both tasks were registered at 00:04:24 local time, which is 07:04:24 UTC, so `drogon` fires 17 minutes 36 seconds later. My report said 15 minutes. A second reboot path exists in the DLL: a thread checks that the system is not already shutting down, deletes `drogon` and calls `InitiateSystemShutdownExW` with a forced reboot. Whichever comes first wins.
+Three commands run through `cmd.exe`: delete `rhaegal` if it exists, create `rhaegal` to run `dispci.exe -id 3051760386` as SYSTEM at startup, and create `drogon` to run `shutdown.exe /r /t 0 /f` once at 00:22:00. Both tasks were registered at 00:04:24 local time, which is 07:04:24 UTC, so `drogon` fires 17 minutes 36 seconds later. The analyst's report said 15 minutes. A second reboot path exists in the DLL: a thread checks that the system is not already shutting down, deletes `drogon` and calls `InitiateSystemShutdownExW` with a forced reboot. Whichever comes first wins.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">The built-in reboot</div><div class="fig-sub">IDA, InitiateSystemShutdownExW with force and reboot set</div></div><div class="fig-draw"><img src="/shared/img/badrabbit/code-shutdown.jpg" alt="Disassembly pushing reason 80000000h, bRebootAfterShutdown 1 and bForceAppsClosed 1 before calling InitiateSystemShutdownExW" width="611" height="278" loading="lazy" /></div></figure>
 
 ### 7. A helper with a pipe
 
-`C:\Windows\4788.tmp` is created and started with `\\.\pipe\{347F5509-AC03-4904-96A3-991922D50A23}` as its only argument. I did not capture the file. The DLL carries two small executables that mention `lsass.exe`, `lsasrv.dll` and `wdigest` and also formats a `\\.\pipe\%ws` name, so I read this as a credential-theft helper reporting back over a pipe. That is an inference. My earlier report listed those two files as "unknown", and the word "mimikatz" does not appear in the strings.
+`C:\Windows\4788.tmp` is created and started with `\\.\pipe\{347F5509-AC03-4904-96A3-991922D50A23}` as its only argument. The analyst did not capture the file. The DLL carries two small executables that mention `lsass.exe`, `lsasrv.dll` and `wdigest` and also formats a `\\.\pipe\%ws` name, so the analyst read this as a credential-theft helper reporting back over a pipe. That is an inference. The analyst's earlier report listed those two files as "unknown", and the word "mimikatz" does not appear in the strings.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">The helper process</div><div class="fig-sub">ProcDOT graph, 4788.tmp with PID 6188</div></div><div class="fig-draw"><img src="/shared/img/badrabbit/procdot-4788.jpg" alt="ProcDOT graph showing the file C:\Windows\4788.tmp created and a process 4788.tmp with PID 6188 based on it" width="720" height="209" loading="lazy" /></div></figure>
 
 ### 8. Sweep the network
 
-At 58.36 s, within a second of the tasks being registered, the guest announces itself to the browser service and asks for `WORKGROUP<1b>`. It then sends 1,547 ARP requests across `192.168.122.0` to `.144` (44 addresses are asked 15 times, 90 are asked 9 times), 410 reverse-DNS queries, and 600 LLMNR frames repeating them. Only the hypervisor bridge and my REMnux host answer ARP. The guest sends SYNs to ports 445, 139 and 80 on those two machines, and every one is refused. There is **no SMB negotiation, no `ADMIN$` or `IPC$` access and no SYN-ACK in the file**. The packet capture carries no process names, so I attribute the sweep to the sample because it starts at the same moment as the task registration.
+At 58.36 s, within a second of the tasks being registered, the guest announces itself to the browser service and asks for `WORKGROUP<1b>`. It then sends 1,547 ARP requests across `192.168.122.0` to `.144` (44 addresses are asked 15 times, 90 are asked 9 times), 410 reverse-DNS queries, and 600 LLMNR frames repeating them. Only the hypervisor bridge and the analyst's REMnux host answer ARP. The guest sends SYNs to ports 445, 139 and 80 on those two machines, and every one is refused. There is **no SMB negotiation, no `ADMIN$` or `IPC$` access and no SYN-ACK in the file**. The packet capture carries no process names, so the analyst attributes the sweep to the sample because it starts at the same moment as the task registration.
 
 ### 9. Reboot
 
-The capture's last frame is at 07:14:04, and my second Regshot is at 07:12:49. Both are before the 07:22:00 reboot. After the reboot, `rhaegal` starts `dispci.exe`, which shows a black text screen and a password prompt. The VM would not let me log in afterwards, which fits the bootloader strings in `dispci.exe` (`partition unbootable`, `this disk is unbootable`, `Run DECRYPT app at your desktop after system boot`), but I did not capture a disk write.
+The capture's last frame is at 07:14:04, and the analyst's second Regshot is at 07:12:49. Both are before the 07:22:00 reboot. After the reboot, `rhaegal` starts `dispci.exe`, which shows a black text screen and a password prompt. The VM did not allow a login afterwards, which fits the bootloader strings in `dispci.exe` (`partition unbootable`, `this disk is unbootable`, `Run DECRYPT app at your desktop after system boot`), but the analyst did not capture a disk write.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">The lock screen</div><div class="fig-sub">Screenshot after the reboot, installation key blurred</div></div><div class="fig-draw"><img src="/shared/img/badrabbit/ransom-screen.jpg" alt="Black text-mode screen reading Oops! Your files have been encrypted, with instructions to visit an onion address, a blurred personal installation key and a password prompt" width="600" height="376" loading="lazy" /></div></figure>
 
-**Present in the code, not exercised in my run.** The DLL has a 113-extension list of file types to encrypt (documents, databases, virtual disks, keys and archives) that skips `\AppData`, `\ProgramData`, `\Program Files` and `\Windows`, an embedded RSA public key, a `wevtutil cl` log-clearing command, `\\%s\admin$` and `IPC$` copy logic, a `wmic ... process call create` launcher, and 63 default usernames and passwords. These are findings from strings and disassembly. Nothing in my telemetry shows any of them running.
+**Present in the code, not exercised in the local run.** The DLL has a 113-extension list of file types to encrypt (documents, databases, virtual disks, keys and archives) that skips `\AppData`, `\ProgramData`, `\Program Files` and `\Windows`, an embedded RSA public key, a `wevtutil cl` log-clearing command, `\\%s\admin$` and `IPC$` copy logic, a `wmic ... process call create` launcher, and 63 default usernames and passwords. These are findings from strings and disassembly. Nothing in the analyst's telemetry shows any of them running.
 
 ### Sandbox tags and heuristics reviewed
 
@@ -212,7 +212,7 @@ rule BadRabbit_Dispci_Locker
 }
 ```
 
-These are string rules, so a repacked or modified build can evade them, and I did not run them against a large clean corpus.
+These are string rules, so a repacked or modified build can evade them, and the analyst did not run them against a large clean corpus.
 
 **Behavior.**
 
@@ -251,21 +251,21 @@ These are string rules, so a repacked or modified build can evade them, and I di
 
 **Inferred.** That `4788.tmp` steals credentials, that the sweep belongs to the sample (timing only, since the capture has no process names), that the `15` argument is a delay, and that the reboot overwrites boot structures.
 
-**Not established.** The hash of `4788.tmp` and of the dropped `infpub.dat`, the computed mutex name for my host, what transforms the two "packed" outer streams into the final files, whether `-id` is generated per run (my report's task table shows a different value, `1675483173`, from an execution I did not document), and everything after the reboot. This is a single detonation, so process IDs, the `4788` file name and the pipe GUID should not be used as indicators until a second run confirms them.
+**Not established.** The hash of `4788.tmp` and of the dropped `infpub.dat`, the computed mutex name for the analyst's host, what transforms the two "packed" outer streams into the final files, whether `-id` is generated per run (the task table in the analyst's report shows a different value, `1675483173`, from an execution the analyst did not document), and everything after the reboot. This is a single detonation, so process IDs, the `4788` file name and the pipe GUID should not be used as indicators until a second run confirms them.
 
 ### Corrections to earlier reports
 
-Going back to the raw files turned up several points where my report v2 was wrong or overstated:
+Going back to the raw files turned up several points where the analyst's report v2 was wrong or overstated:
 
-- **The BAM key is not a boot blocker.** I wrote that the `bam\State\UserSettings` value "probably prevents the user from loading into Windows". It is the Background Activity Moderator's last-run timestamp, and it decodes to 07:04:21.854 UTC. It is the best start-time evidence I have.
+- **The BAM key is not a boot blocker.** the analyst wrote that the `bam\State\UserSettings` value "probably prevents the user from loading into Windows". It is the Background Activity Moderator's last-run timestamp, and it decodes to 07:04:21.854 UTC. It is the best start-time evidence the analyst has.
 - **`drogon` fires after 17 min 36 s, not about 15 minutes.** Registered 00:04:24, scheduled 00:22:00.
-- **The SHA-256 in my hash table was the SHA-1.** The sample's SHA-256 is `630325ca…58d0da`.
-- **The sizes in my DIE tables are not file sizes.** I listed `dispci.exe` as 368,640 bytes and `cscc.dat` as 225,280. On disk they are 142,848 and 210,632. The larger numbers look like PE image sizes, which I did not verify.
-- **The "packed" streams are not copies.** I called stream `0x554dd` a packed `dispci.exe` and `0x27b82` a packed 32-bit driver because their DIE sizes matched. Their on-disk sizes and hashes differ from the final files, so they are related by role only.
+- **The SHA-256 in the analyst's hash table was the SHA-1.** The sample's SHA-256 is `630325ca…58d0da`.
+- **The sizes in the analyst's DIE tables are not file sizes.** the analyst listed `dispci.exe` as 368,640 bytes and `cscc.dat` as 225,280. On disk they are 142,848 and 210,632. The larger numbers look like PE image sizes, which the analyst did not verify.
+- **The "packed" streams are not copies.** the analyst called stream `0x554dd` a packed `dispci.exe` and `0x27b82` a packed 32-bit driver because their DIE sizes matched. Their on-disk sizes and hashes differ from the final files, so they are related by role only.
 - **`KeInitializeMutex` is not a mutex indicator.** It creates an unnamed kernel object.
 - **The behaviour graph says the driver and locker "start encrypting" when they are dropped.** No telemetry shows encryption before the reboot.
-- **The SMB propagation is from the code, not the network.** I wrote that the DLL tries to access other systems with hard-coded credentials. That is true of the code. There is no authentication attempt in the capture.
-- **My network-analysis, mutex and DNS sections were empty.** They are filled in here.
+- **The SMB propagation is from the code, not the network.** the analyst wrote that the DLL tries to access other systems with hard-coded credentials. That is true of the code. There is no authentication attempt in the capture.
+- **The analyst's network-analysis, mutex and DNS sections were empty.** They are filled in here.
 
 ## References
 

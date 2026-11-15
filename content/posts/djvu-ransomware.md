@@ -1,25 +1,25 @@
 ---
-title: "Djvu (.tisc): a ransomware sample that copies itself, locks its own folder and keeps asking for a key it never gets"
-description: A walk through a 32-bit STOP/Djvu ransomware sample from my own lab report, Procmon, Regshot and Wireshark data. Covers the self-copy with a deny-delete ACL, the scheduled task and Run key, the failed key fetch against INetSim, why build2.exe and build3.exe are not real payloads, and corrections to my first report.
+title: "Djvu (.tisc): 32-bit ransomware with a deny-delete ACL on its install folder"
+description: "`djvu.exe` is a 775,168-byte 32-bit PE GUI executable with a header timestamp of 2021-04-08 06:10:32 UTC (can be altered). It was run once on a Windows 10 build 19041 VM with INetSim and no real internet. No hosted-sandbox report exists for this sample."
 authors: [Y2GX64]
 category: Malware Analysis
 date: 2026-10-27
 ---
 
-*Analysis date: local detonation on 31 August 2026. My report (version 1) is dated the same day. This post re-checks that report against the Procmon log, the Regshot diff, the packet capture and the dropped files, so some details differ from the report. The differences are listed at the end.*
+*Analysis date: local detonation on 31 August 2026. The analyst's report (version 1) is dated the same day. This post re-checks that report against the Procmon log, the Regshot diff, the packet capture and the dropped files, so some details differ from the report. The differences are listed at the end.*
 
 ## Summary
 
 `djvu.exe` is a 775,168-byte 32-bit Windows GUI executable from the STOP/Djvu ransomware family. It encrypted files with the extension `.tisc` and left a `_readme.txt` ransom note in each affected folder. Before encrypting, it copied itself into a GUID-named folder under `%LOCALAPPDATA%`, denied Everyone delete rights on that folder with `icacls`, and set up two ways to start again: a scheduled task and a Run key value called `SysHelper`.
 
-**The two "payloads" it downloaded were not real.** My lab ran INetSim, which answers every request with a default response. `build2.exe` and `build3.exe` are the same 13,838-byte INetSim stand-in file, and the "C2 response" saved as `bowsakkdestx.txt` is INetSim's default web page. So I can describe how the malware asks for its key and payloads, but not what the real server would have sent back.
+**The two "payloads" it downloaded were not real.** The analyst's lab ran INetSim, which answers every request with a default response. `build2.exe` and `build3.exe` are the same 13,838-byte INetSim stand-in file, and the "C2 response" saved as `bowsakkdestx.txt` is INetSim's default web page. So the analyst can describe how the malware asks for its key and payloads, but not what the real server would have sent back.
 
 | | |
 |---|---|
 | Sample | `djvu.exe`, 775,168 B, PE32 GUI, i386 |
 | SHA-256 | `4380c45fd46d1a63cffe4d37cf33b0710330a766b7700af86020a936cdd09cbe` |
 | MD5 / SHA-1 | `7d208dd86e75c9c5900a85b08ef0b070` / `79a453d4e5403307b54205094ded4e5ff0382c71` |
-| Header timestamp | 2021-04-08 06:10:32 UTC (can be forged, so I do not rely on it) |
+| Header timestamp | 2021-04-08 06:10:32 UTC (can be forged, so the analyst does not rely on it) |
 | Environment | Windows 10 build 19041 VM, INetSim, no real internet. No hosted-sandbox report exists for this sample |
 | Evidence | Procmon (read as strings), Regshot diff, Wireshark capture (4,563 frames, 1,210.8 s), dropped files, FLOSS, DetectItEasy |
 
@@ -28,8 +28,8 @@ A standalone execution-chain report with every path, command line and packet fra
 ## Concepts used in this sample
 
 - **STOP/Djvu.** A long-running family of file-encrypting ransomware sold to affiliates. Each wave uses a new file extension; this one uses `.tisc`.
-- **Offline key.** When the malware cannot reach its server to fetch a per-victim key, public write-ups say it falls back to a key built into the program. Files encrypted that way are easier for researchers to help with. The ID in this note ends in `t1`, which those write-ups associate with this fallback. I have not confirmed that in the binary.
-- **INetSim.** A tool that fakes internet services (DNS, HTTP, HTTPS) on a lab network. It answers every request with a canned page or file, so downloads in a lab like this are never the real thing.
+- **Offline key.** When the malware cannot reach its server to fetch a per-victim key, public write-ups say it falls back to a key built into the program. Files encrypted that way are easier for researchers to help with. The ID in this note ends in `t1`, which those write-ups associate with this fallback. the analyst has not confirmed that in the binary.
+- **INetSim.** A tool that simulates internet services (DNS, HTTP, HTTPS) on a lab network. It answers every request with a canned page or file, so downloads in a lab like this are never the real thing.
 - **Deny ACE for Everyone.** `icacls ... /deny *S-1-1-0:(OI)(CI)(DE,DC)` adds an access rule that forbids delete and delete-child for the Everyone group, on a folder and everything under it. It makes cleaning up the malware's own copy harder.
 - **Run key and scheduled task.** Two standard Windows ways to start a program at logon or on a timer. The malware uses both for redundancy.
 
@@ -41,7 +41,7 @@ A standalone execution-chain report with every path, command line and packet fra
 
 ### Files
 
-Full paths. `w10analysis` is my lab user; the two GUID-style folder names were produced in this run.
+Full paths. `w10analysis` is the lab user; the two GUID-style folder names were produced in this run.
 
 | Path | Hash | Role |
 |---|---|---|
@@ -54,7 +54,7 @@ Full paths. `w10analysis` is my lab user; the two GUID-style folder names were p
 | `<folder>\_readme.txt` | MD5 `ec0883f1723d53dfe22aadf736f0a359` | Ransom note, in every affected folder |
 | `<path>.tisc` | n/a | Encrypted files. 1,971 distinct paths in the Procmon string table (a lower bound) |
 
-I leave out the thousands of files belonging to the Wireshark, Sysinternals, ProcDOT, Graphviz and x64dbg installs that were encrypted. They are victims, not attacker files. No exfiltration bundle was observed.
+The analyst leave out the thousands of files belonging to the Wireshark, Sysinternals, ProcDOT, Graphviz and x64dbg installs that were encrypted. They are victims, not attacker files. No exfiltration bundle was observed.
 
 ### Registry
 
@@ -66,7 +66,7 @@ I leave out the thousands of files belonging to the Wireshark, Sysinternals, Pro
 
 ### Mutexes
 
-None observed. Procmon does not log mutex creation, so this is a gap in my tooling, not proof that the sample uses none.
+None observed. Procmon does not log mutex creation, so this is a gap in the analyst's tooling, not proof that the sample uses none.
 
 ### Command lines
 
@@ -110,7 +110,7 @@ No frame carries file contents or the victim ID.
 
 ### Cross-run consistency
 
-Single run. This post uses one full detonation (31 Aug 2026). An earlier capture from 30 Aug (`gateway_djvu.pcapng`, 2 GB) is not parsed, so I cannot say whether the GUID folder names or the `bowsakkdestx.txt` name change between runs.
+Single run. This post uses one full detonation (31 Aug 2026). An earlier capture from 30 Aug (`gateway_djvu.pcapng`, 2 GB) is not parsed, so the analyst cannot say whether the GUID folder names or the `bowsakkdestx.txt` name change between runs.
 
 ## Execution flow
 
@@ -122,11 +122,11 @@ The file is a PE32 GUI executable with five sections (`.text`, `.rdata`, `.data`
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Section sizes</div><div class="fig-sub">Virtual and raw size of .data</div></div><div class="fig-draw"><img src="/shared/img/djvu/die-section-sizes.png" alt="DetectItEasy section table showing the .data virtual and raw sizes" width="578" height="170" loading="lazy" /></div></figure>
 
-FLOSS shows long runs of nonsense lowercase syllables. I treat them as filler meant to confuse string-based tools. The imports `IsDebuggerPresent` and `GetTickCount` suggest anti-analysis checks, but I did not confirm either in this run.
+FLOSS shows long runs of nonsense lowercase syllables. The analyst treats them as filler meant to confuse string-based tools. The imports `IsDebuggerPresent` and `GetTickCount` suggest anti-analysis checks, but the analyst did not confirm either in this run.
 
 ### 2. A slow start
 
-I noticed the sample was quiet for a long time before encrypting anything, and a second process with the same name and a different PID appeared later. The capture is consistent with that gap: the file reaches the VM over SMB at about 40 seconds and the first request from the sample is at 188 seconds. I cannot say how much of that is deliberate delay and how much is the time I took to launch it, because the Procmon dump has no timestamps.
+The analyst noticed the sample was quiet for a long time before encrypting anything, and a second process with the same name and a different PID appeared later. The capture is consistent with that gap: the file reaches the VM over SMB at about 40 seconds and the first request from the sample is at 188 seconds. The analyst cannot say how much of that is deliberate delay and how much is the time the analyst took to launch it, because the Procmon dump has no timestamps.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">First process</div><div class="fig-sub">Process Explorer, shortly after launch</div></div><div class="fig-draw"><img src="/shared/img/djvu/proc-initial.png" alt="Process Explorer row for the first djvu.exe process" width="663" height="74" loading="lazy" /></div></figure>
 
@@ -134,7 +134,7 @@ I noticed the sample was quiet for a long time before encrypting anything, and a
 
 ### 3. Self-copy, lock-down and persistence
 
-The sample copies itself to `%LOCALAPPDATA%\b12df7dc-…\djvu.exe`. The copy has the same MD5 as the original. It then runs `icacls` to deny Everyone delete and delete-child on that folder. I could not recover the order of the copy, the ACL change and the two persistence steps from a string dump, so the post lists them as a group.
+The sample copies itself to `%LOCALAPPDATA%\b12df7dc-…\djvu.exe`. The copy has the same MD5 as the original. It then runs `icacls` to deny Everyone delete and delete-child on that folder. The analyst could not recover the order of the copy, the ACL change and the two persistence steps from a string dump, so the post lists them as a group.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Scheduled task</div><div class="fig-sub">Time Trigger Task running djvu.exe --Task</div></div><div class="fig-draw"><img src="/shared/img/djvu/sched-task.png" alt="Regshot diff showing the Time Trigger Task action with djvu.exe --Task" width="776" height="205" loading="lazy" /></div></figure>
 
@@ -160,7 +160,7 @@ Within about half a second the sample requests three things. Frame 3287 fetches 
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">GET /files/1/build3.exe</div><div class="fig-sub">Request to securebiz.org</div></div><div class="fig-draw"><img src="/shared/img/djvu/get-build3.png" alt="Wireshark packet detail of the HTTP GET for build3.exe" width="1456" height="612" loading="lazy" /></div></figure>
 
-Both executables are run from `%LOCALAPPDATA%\2e51dfb3-…\`. Windows' Background Activity Monitor recorded both, which is how I know they ran. Because they are INetSim's stand-in file, I cannot say what the real ones would do.
+Both executables are run from `%LOCALAPPDATA%\2e51dfb3-…\`. Windows' Background Activity Monitor recorded both, which is how the analyst knows they ran. Because they are INetSim's stand-in file, the analyst cannot say what the real ones would do.
 
 The sample then asks for the key again about every five seconds, three more times with `first=true` and, around 795 to 810 s, four times without it.
 
@@ -170,13 +170,13 @@ The sample then asks for the key again about every five seconds, three more time
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">PersonalID.txt</div><div class="fig-sub">Contents of C:\SystemID\PersonalID.txt</div></div><div class="fig-draw"><img src="/shared/img/djvu/personalid-content.png" alt="Notepad showing the contents of PersonalID.txt" width="480" height="125" loading="lazy" /></div></figure>
 
-Encryption then starts. Files get `.tisc` appended and a `_readme.txt` note is written to each folder, including the root of `C:\`, my user profile and `C:\binaries`. The sample encrypted my analysis tools and an earlier sample, `C:\binaries\wannacry\wannacry.exe`. It did not skip them.
+Encryption then starts. Files get `.tisc` appended and a `_readme.txt` note is written to each folder, including the root of `C:\`, the analyst's user profile and `C:\binaries`. The sample encrypted the analyst's analysis tools and an earlier sample, `C:\binaries\wannacry\wannacry.exe`. It did not skip them.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Encrypted files and notes</div><div class="fig-sub">ProcDOT detail: hsin.txt renamed to hsin.txt.tisc, _readme.txt written in several folders</div></div><div class="fig-draw"><img src="/shared/img/djvu/encrypted-files.png" alt="ProcDOT detail showing important_docs hsin.txt renamed to hsin.txt.tisc and _readme.txt notes in C:, C:\binaries and C:\binaries\wannacry" width="1192" height="362" loading="lazy" /></div></figure>
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">ProcDOT graph</div><div class="fig-sub">Launcher PID 6124. Boxes are files, ellipses are network endpoints</div></div><div class="fig-draw"><img src="/shared/img/djvu/procdot-graph.png" alt="ProcDOT graph of djvu.exe file, process and network activity" width="1031" height="627" loading="lazy" /></div></figure>
 
-No packet in the capture carries file contents or the victim ID. Nothing leaves the VM except the requests in step 4 and 5. I recovered no command line that deletes shadow copies, but a string dump is weak evidence for something not happening.
+No packet in the capture carries file contents or the victim ID. Nothing leaves the VM except the requests in step 4 and 5. The analyst recovered no command line that deletes shadow copies, but a string dump is weak evidence for something not happening.
 
 The note asks for $980, or $490 if the victim writes within 72 hours, and offers to decrypt one file for free.
 
@@ -185,7 +185,7 @@ The note asks for $980, or $490 if the victim writes within 72 hours, and offers
 - `cmd.exe /s /k pushd "%V"` and `powershell.exe -noexit -command Set-Location -literalPath '%V'` in Procmon are Explorer's "open here" shell-verb definitions, not spawned processes.
 - The Google updater `--system --windows-service` lines are the updater service.
 - Dozens of `authrootstl.cab` requests to `ctldl.windowsupdate.com` and the `settings-win.data.microsoft.com` TLS sessions are Windows certificate-list fetches and telemetry.
-- A `BITS\Start` change from 3 to 2 and a `WerFault.exe` BAM entry appear in the Regshot diff. I did not attribute either to the sample.
+- A `BITS\Start` change from 3 to 2 and a `WerFault.exe` BAM entry appear in the Regshot diff. The analyst did not attribute either to the sample.
 - `239.255.255.250:1900` (SSDP) is background noise.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">HTTP hosts seen</div><div class="fig-sub">Wireshark statistics. 239.255.255.250:1900 is SSDP noise</div></div><div class="fig-draw"><img src="/shared/img/djvu/http-stats.png" alt="Wireshark HTTP request statistics table" width="904" height="107" loading="lazy" /></div></figure>
@@ -214,15 +214,15 @@ The note asks for $980, or $490 if the victim writes within 72 hours, and offers
 | Command and Control | T1071.001 Web Protocols | `get.php` key request |
 | Impact | T1486 Data Encrypted for Impact | `.tisc` files, `_readme.txt` |
 
-I did not tag T1490 (Inhibit System Recovery) because I saw no evidence for it. T1497/T1622 (debugger checks) would be a guess from the import table alone.
+the analyst did not tag T1490 (Inhibit System Recovery) because the analyst saw no evidence for it. T1497/T1622 (debugger checks) would be a guess from the import table alone.
 
 ## Confidence and limits
 
 **Observed.** The self-copy, the `icacls` command, the scheduled task and Run key, the three domains and the request paths, the INetSim-sourced downloads, the `.tisc` encryption and the ransom note.
 
-**Inferred.** The order of the host-side steps (the Procmon dump has no timestamps), and the `t1` offline-key reading, which comes from public descriptions of the family and not from my own reverse engineering.
+**Inferred.** The order of the host-side steps (the Procmon dump has no timestamps), and the `t1` offline-key reading, which comes from public descriptions of the family and not from the analyst's own reverse engineering.
 
-**Not established.** Whether the folder GUIDs or the random `bowsakkdestx.txt` name change between runs (one full run is parsed; the 30 Aug capture is not). What the real `build2.exe`, `build3.exe` and key reply contain, because the real C2 was never reached. Encryption speed and duration. Mutexes, shadow-copy commands and exfiltration were not observed, which reflects what I captured and is not proof of absence.
+**Not established.** Whether the folder GUIDs or the random `bowsakkdestx.txt` name change between runs (one full run is parsed; the 30 Aug capture is not). What the real `build2.exe`, `build3.exe` and key reply contain, because the real C2 was never reached. Encryption speed and duration. Mutexes, shadow-copy commands and exfiltration were not observed, which reflects what the analyst captured and is not proof of absence.
 
 ### Corrections to earlier reports
 

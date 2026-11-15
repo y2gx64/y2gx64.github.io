@@ -1,18 +1,18 @@
 ---
-title: "PvZ Fusion translation pack: a fan mod that installs .NET and updates itself from GitHub, with no malicious behaviour observed"
-description: A check of the PvZ Fusion Multi-lang 4.0.5.2 Alpha zip after a Discord user flagged it from a sandbox report. Covers the MelonLoader and mod-updater chain, the .NET 6 runtime install that triggered the "autorun" tag, and why I rate this sample as not malicious while naming the one trust risk that remains.
+title: "PvZ Fusion translation pack: MelonLoader mod and updater, no malicious behaviour observed"
+description: "`PvZ.Fusion.Multi-lang.4.0.5.2.Alpha.by.Blooms.zip` is a 680,952,884-byte archive with 620 entries. It was run once on a Windows 10 22H2 VM (build 19045) after a Discord user flagged it from a sandbox report."
 authors: [Y2GX64]
 category: Malware Analysis
 date: 2026-10-28
 ---
 
-*Analysis date: local detonation on 25 October 2026. My report is a partly filled template with the repository checks done and no execution flow yet. This post fills that gap from my Procmon log, Regshot diff and packet capture, so it adds to the report rather than correcting it. The differences are listed at the end.*
+*Analysis date: local detonation on 25 October 2026. The analyst's report is a partly filled template with the repository checks done and no execution flow yet. This post fills that gap from the Procmon log, Regshot diff and packet capture, so it adds to the report rather than correcting it. The differences are listed at the end.*
 
 ## Summary
 
-A Discord user suspected the GitHub repository `Teyliu/PVZF-Translation` after submitting its download to a hosted sandbox. That report tagged an untrusted-certificate executable and a changed autorun value. I ran the zip in my own Windows 10 VM, using the `Launch Game (Multilang No Console).bat` launcher, and recorded Procmon, Regshot and a packet capture.
+A Discord user suspected the GitHub repository `Teyliu/PVZF-Translation` after submitting its download to a hosted sandbox. That report tagged an untrusted-certificate executable and a changed autorun value. The analyst ran the zip in the analyst's own Windows 10 VM, using the `Launch Game (Multilang No Console).bat` launcher, and recorded Procmon, Regshot and a packet capture.
 
-**I rate this sample as not malicious: every process, file write and connection I observed is explained by a Unity game running under MelonLoader, a mod updater, and Microsoft's .NET 6 runtime installer.** The "autorun" and "untrusted certificate" tags do not hold up against my data. One real risk remains: the updater downloads new mod DLLs from GitHub on every launch and replaces the ones in the game folder. That is the normal design of a mod updater, but it means the safety of the pack depends on the repository owner's account, not on the zip I tested.
+**The analyst rates this sample as not malicious: every process, file write and connection the analyst observed is explained by a Unity game running under MelonLoader, a mod updater, and Microsoft's .NET 6 runtime installer.** The "autorun" and "untrusted certificate" tags do not hold up against the analyst's data. One real risk remains: the updater downloads new mod DLLs from GitHub on every launch and replaces the ones in the game folder. That is the normal design of a mod updater, but it means the safety of the pack depends on the repository owner's account, not on the zip the analyst tested.
 
 | | |
 |---|---|
@@ -20,7 +20,7 @@ A Discord user suspected the GitHub repository `Teyliu/PVZF-Translation` after s
 | SHA-256 | `6208af094df244e5f87e439c850127532b86ce0c522b54776851600059bc55e9` |
 | Header timestamp | Not extracted. The executables were not run through a PE parser for this post. |
 | Environment | Windows 10 22H2 (build 19045) VM, user `w10analysis`, host `DESKTOP-EMBRA04`, one run, 44,953 Procmon rows, 26,212 packets |
-| Evidence | Procmon CSV and PML, Regshot 1.9.0 diff (09:43:09 to 09:58:58), `pvz.pcapng` (09:49:23 to 09:58:19, UTC), my ODT report, static strings on five files |
+| Evidence | Procmon CSV and PML, Regshot 1.9.0 diff (09:43:09 to 09:58:58), `pvz.pcapng` (09:49:23 to 09:58:19, UTC), the analyst's ODT report, static strings on five files |
 
 A standalone execution-chain report accompanies this post; it is linked under References and repeats the evidence in table form.
 
@@ -36,7 +36,7 @@ A standalone execution-chain report accompanies this post; it is linked under Re
 
 <figure class="art-fig art-diagram"><div class="fig-head"><div class="fig-title">PvZ Fusion pack at a glance</div><div class="fig-sub">What happened in the lab, in order. Dots mark steps that change the system.</div></div><div class="fig-draw" role="img" aria-label="Run the launcher bat, start the mod updater, fetch two mod DLLs from GitHub, start the game under MelonLoader, MelonLoader downloads and installs the .NET 6 runtime from Microsoft, then Cpp2IL builds helper assemblies and the game keeps running."><svg viewBox="0 0 560 350" width="560" height="350" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" style="font-family:var(--sans);max-width:100%;height:auto"><path d="M11 26 L11 318" fill="none" stroke-width="1" style="stroke:var(--line)"/><circle cx="11" cy="26" r="7" style="fill:var(--bg);stroke:var(--ink-3)" stroke-width="1.2"/><text x="34" y="24" font-size="15" style="fill:var(--ink)">Double-click the launcher .bat</text><text x="34" y="42" font-size="13" style="fill:var(--ink-3)">cmd.exe /C, then ModUpdateUtil.exe from Game Files\Plugins</text><circle cx="11" cy="84" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="84" r="3" style="fill:var(--accent)"/><text x="34" y="82" font-size="15" style="fill:var(--ink)">Updater pulls two mod DLLs</text><text x="34" y="100" font-size="13" style="fill:var(--ink-3)">raw.githubusercontent.com, saved as .dll.update, renamed over the old DLLs</text><circle cx="11" cy="142" r="7" style="fill:var(--bg);stroke:var(--ink-3)" stroke-width="1.2"/><text x="34" y="140" font-size="15" style="fill:var(--ink)">Game starts under MelonLoader</text><text x="34" y="158" font-size="13" style="fill:var(--ink-3)">PlantsVsZombiesRH.exe, child of the updater</text><circle cx="11" cy="200" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="200" r="3" style="fill:var(--accent)"/><text x="34" y="198" font-size="15" style="fill:var(--ink)">.NET 6.0.36 runtime installed</text><text x="34" y="216" font-size="13" style="fill:var(--ink-3)">29 MB from builds.dotnet.microsoft.com, /install /passive /norestart</text><circle cx="11" cy="258" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="258" r="3" style="fill:var(--accent)"/><text x="34" y="256" font-size="15" style="fill:var(--ink)">Cpp2IL builds helper assemblies</text><text x="34" y="274" font-size="13" style="fill:var(--ink-3)">Dozens of DLLs written inside the game folder</text><circle cx="11" cy="316" r="7" style="fill:var(--bg);stroke:var(--ink-3)" stroke-width="1.2"/><text x="34" y="314" font-size="15" style="fill:var(--ink)">Game keeps running</text><text x="34" y="332" font-size="13" style="fill:var(--ink-3)">Only an api.melonloader.com lookup and Windows telemetry afterwards</text></svg></div></figure>
 
-My report has no flow chart of its own yet. The four screenshots it does contain (the repository statistics) are in step 1 of the Execution flow.
+The analyst's report has no flow chart of its own yet. The four screenshots it does contain (the repository statistics) are in step 1 of the Execution flow.
 
 ## Indicators of compromise
 
@@ -44,7 +44,7 @@ These are host artifacts of a benign run, listed so the next analyst can tell th
 
 ### Files
 
-Full paths. `w10analysis` is my lab user. I leave out the roughly 600 game assets and libraries in the zip (MelonLoader, Unity, the `Dumps\Default Textures` images and the 49 `cpp2il_out` helper DLLs). They are third-party or game files, and none had an unexpected name or location.
+Full paths. `w10analysis` is the lab user. The analyst leave out the roughly 600 game assets and libraries in the zip (MelonLoader, Unity, the `Dumps\Default Textures` images and the 49 `cpp2il_out` helper DLLs). They are third-party or game files, and none had an unexpected name or location.
 
 | Path | Hash | Role |
 |---|---|---|
@@ -66,11 +66,11 @@ Full paths. `w10analysis` is my lab user. I leave out the roughly 600 game asset
 | `C:\Users\w10analysis\AppData\LocalLow\LanPiaoPiao\PlantsVsZombiesRH\Player.log` | n/a | Unity player log, the save location named in the Read Me |
 | `C:\Program Files\dotnet\shared\Microsoft.NETCore.App\6.0.36\` | n/a | Installed runtime (referenced by Regshot) |
 
-Launcher scripts. The extracted copies on my analysis host carry a `.bnuy` suffix; the zip itself holds `.bat` files. The two I hashed:
+Launcher scripts. The extracted copies on the analyst's analysis host carry a `.bnuy` suffix; the zip itself holds `.bat` files. The two the analyst hashed:
 
 | Path in zip | SHA-256 | Role |
 |---|---|---|
-| `Launch Game (Multilang No Console).bat` | `8727bf96…24302` | The launcher I ran |
+| `Launch Game (Multilang No Console).bat` | `8727bf96…24302` | The launcher the analyst ran |
 | `Launch Game (Multilang).bat` | `636eece9…fa9322a` (hash of the `.bnuy` copy, 189 bytes) | Same, without `--melonloader.hideconsole` |
 
 No exfiltration bundle was observed. No file was written to a Startup folder, a scheduled-task folder or `System32` by the game or updater.
@@ -94,7 +94,7 @@ Procmon was captured without registry operations, so all registry evidence is th
 
 ### Mutexes
 
-Not recorded in the evidence used for this post. Procmon and Regshot do not show mutex objects, so I cannot say whether any were created.
+Not recorded in the evidence used for this post. Procmon and Regshot do not show mutex objects, so the analyst cannot say whether any were created.
 
 ### Command lines
 
@@ -115,7 +115,7 @@ C:\Windows\syswow64\MsiExec.exe -Embedding 1727E1CA4C0EB308020AE33BEEF94ECB
 "C:\Users\w10analysis\Desktop\PvZ.Fusion.Multi-lang.4.0.5.2.Alpha.by.Blooms\Game Files\MelonLoader\Dependencies\Il2CppAssemblyGenerator\Cpp2IL\Cpp2IL.exe" --game-path "C:\Users\w10analysis\Desktop\PvZ.Fusion.Multi-lang.4.0.5.2.Alpha.by.Blooms\Game Files" --exe-name "PlantsVsZombiesRH" --output-as dummydll --use-processor attributeanalyzer attributeinjector
 ```
 
-The launcher script also contains `winget install Microsoft.DotNet.Runtime.6 --architecture x64 --accept-package-agreements --accept-source-agreements`. I did not see `winget.exe` start in Procmon, so I do not list it as an observed command. The Procmon rows for the Wireshark `extcap` helpers, `conhost.exe`, `DllHost.exe`, `taskhostw.exe` and `SearchFilterHost.exe` are my tooling or Windows, not the sample.
+The launcher script also contains `winget install Microsoft.DotNet.Runtime.6 --architecture x64 --accept-package-agreements --accept-source-agreements`. The analyst did not see `winget.exe` start in Procmon, so the analyst does not list it as an observed command. The Procmon rows for the Wireshark `extcap` helpers, `conhost.exe`, `DllHost.exe`, `taskhostw.exe` and `SearchFilterHost.exe` are the analyst's tooling or Windows, not the sample.
 
 ### Network
 
@@ -143,17 +143,17 @@ Procmon times are local (UTC−7); frame times below are seconds from the first 
 | 21,777 to 21,979 | `api.melonloader.com`, stream 11, 104.26.15.24:443 | about 5.3 kB | Step 5, MelonLoader API |
 | 21,833 to 24,453 | `client.wns.windows.com`, about every 30 s | about 10 kB per stream | Windows push-notification polling |
 | 22,358 | `licensing.mp.microsoft.com` | about 15 kB | Windows licensing |
-| stream 1 (7.4 s onward) | 192.168.122.10:445 SMB | about 27 MB, 25 MB of it from the VM | Lab file share. I did not analyse this stream; it is consistent with my tools writing their logs to the host, but I did not confirm that. |
+| stream 1 (7.4 s onward) | 192.168.122.10:445 SMB | about 27 MB, 25 MB of it from the VM | Lab file share. The analyst did not analyse this stream; it is consistent with the analyst's tools writing their logs to the host, but the analyst did not confirm that. |
 
 The 7.4 s to 535 s SMB stream and the lab DNS chatter are outside the sample window.
 
 ### Cross-run consistency
 
-Single run, so I cannot say what stays constant between runs. The sandbox report named the installer `tmpueu2jt.tmp.exe`; mine is `tmpf42shz.tmp.exe`. Same size class, same command line (`/install /passive /norestart`), different random name, which fits a downloader that names its temp file randomly.
+Single run, so the analyst cannot say what stays constant between runs. The sandbox report named the installer `tmpueu2jt.tmp.exe`; the local copy is `tmpf42shz.tmp.exe`. Same size class, same command line (`/install /passive /norestart`), different random name, which fits a downloader that names its temp file randomly.
 
 ### Other indicators
 
-- Read Me text names the save folder `C:\Users\[Your Username]\AppData\LocalLow\LanPiaoPiao\PlantsVsZombiesRH` and the Discord invite `https://discord.gg/DPAC5ZVJ8T`. Both match what I saw written and contacted.
+- Read Me text names the save folder `C:\Users\[Your Username]\AppData\LocalLow\LanPiaoPiao\PlantsVsZombiesRH` and the Discord invite `https://discord.gg/DPAC5ZVJ8T`. Both match what the analyst saw written and contacted.
 - `Launch Game (Multilang No Console).bat` is 215 bytes with CRLF line endings.
 - The translator DLL also references `https://github.com/Teyliu/PVZF-Translation` and `https://carroti4ch.itch.io/almanac`.
 - `Blooms_QOL.dll` carries the build path `C:\Users\rainb\Documents\GitHub\Blooms QOL\Blooms QOL\obj\Debug\net6.0\Blooms_QOL.pdb`, a developer's own path, which fits a hobbyist mod.
@@ -162,7 +162,7 @@ Single run, so I cannot say what stays constant between runs. The sandbox report
 
 ### 1. Repository check (before running anything)
 
-I started from the repository, because that was the Discord user's concern. The tell-tale of a malicious "leaked game" repository is a bot-driven history: steady additions and no deletions. I compared the flagged repository with a known malicious one, `propound294936-wanders/Secret-Glory-Hole-Leaked-2026`.
+The analyst started from the repository, because that was the Discord user's concern. The tell-tale of a malicious "leaked game" repository is a bot-driven history: steady additions and no deletions. The analyst compared the flagged repository with a known malicious one, `propound294936-wanders/Secret-Glory-Hole-Leaked-2026`.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Code frequency, malicious comparison</div><div class="fig-sub">Secret-Glory-Hole-Leaked-2026: additions every week, no deletions, steadily falling</div></div><div class="fig-draw"><img src="/shared/img/pvz-fusion/code-freq-secret-glory.png" alt="GitHub code frequency chart for Secret-Glory-Hole-Leaked-2026 showing only green additions each week from September to October 2026, no deletions" width="725" height="506" loading="lazy" /></div></figure>
 
@@ -172,13 +172,13 @@ I started from the repository, because that was the Discord user's concern. The 
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Contributors, PVZF-Translation</div><div class="fig-sub">Several human accounts, 132, 27, 26 and 9 commits</div></div><div class="fig-draw"><img src="/shared/img/pvz-fusion/contributors-pvzf.png" alt="GitHub contributors page for Teyliu/PVZF-Translation showing several human contributors with between 9 and 132 commits each over three months" width="720" height="636" loading="lazy" /></div></figure>
 
-The flagged repository looks organic and the comparison one looks automated. This is a weak signal on its own: a repository can be taken over later, and it says nothing about what the zip does. So I ran it.
+The flagged repository looks organic and the comparison one looks automated. This is a weak signal on its own: a repository can be taken over later, and it says nothing about what the zip does. So the analyst ran it.
 
 ### 2. Launch and mod update
 
 At 02:49:33 `explorer.exe` starts `cmd.exe /C "…\Launch Game (Multilang No Console).bat"`. The script then starts `Game Files\Plugins\ModUpdateUtil.exe --melonloader.hideconsole` at 02:49:36.5. The updater opens three TLS connections to `raw.githubusercontent.com` (frames 58 to 269) and exits at 02:49:38.9.
 
-In those 2.4 seconds it writes `Mods\Blooms_QOL.dll.update` and `Mods\PvZ_Fusion_Translator.dll.update`, then calls `SetRenameInformationFile` to move each over its `.dll`. I did not capture the downloaded files, so I cannot say what changed or whether they differ from the shipped DLLs.
+In those 2.4 seconds it writes `Mods\Blooms_QOL.dll.update` and `Mods\PvZ_Fusion_Translator.dll.update`, then calls `SetRenameInformationFile` to move each over its `.dll`. The analyst did not capture the downloaded files, so the analyst cannot say what changed or whether they differ from the shipped DLLs.
 
 ### 3. Game start under MelonLoader
 
@@ -190,31 +190,31 @@ At 02:49:43 the game process contacts `aka.ms` and then `builds.dotnet.microsoft
 
 The installer then follows the Burn pattern: a clean-room copy in `C:\Windows\Temp\{64791A19-…}\.cr\`, an elevated engine in `…\{1E9D929C-…}\.be\`, and three MSI installs through `msiexec.exe`. It exits at 02:50:00, and Regshot shows only the runtime's own registrations.
 
-Why a game launches an installer: the launcher script asks `winget` for the same runtime, and MelonLoader needs .NET 6. Which of the two actually started the installer I cannot prove, but Procmon names the parent as `PlantsVsZombiesRH.exe` (PID 6636), not `cmd.exe`. I did not verify the installer's Authenticode signature. The TLS certificate and the Microsoft names in the Uninstall keys are what supports calling it genuine.
+Why a game launches an installer: the launcher script asks `winget` for the same runtime, and MelonLoader needs .NET 6. Which of the two actually started the installer the analyst cannot prove, but Procmon names the parent as `PlantsVsZombiesRH.exe` (PID 6636), not `cmd.exe`. The analyst did not verify the installer's Authenticode signature. The TLS certificate and the Microsoft names in the Uninstall keys are what supports calling it genuine.
 
 ### 5. Assembly generation
 
-At 02:50:09 the game's loopback connections to 127.0.0.1:15881 begin and fail five times. At 02:50:12 it contacts `api.melonloader.com`. At 02:50:13 it runs `Cpp2IL.exe --game-path … --output-as dummydll`, which writes the 49 helper DLLs under `cpp2il_out` and a `capstone.dll` into `Cpp2IL_Temp`. Cpp2IL exits at 02:52:06 and the game writes `MethodXrefScanCache.db` at 02:54:26. The game was still running when I stopped the capture.
+At 02:50:09 the game's loopback connections to 127.0.0.1:15881 begin and fail five times. At 02:50:12 it contacts `api.melonloader.com`. At 02:50:13 it runs `Cpp2IL.exe --game-path … --output-as dummydll`, which writes the 49 helper DLLs under `cpp2il_out` and a `capstone.dll` into `Cpp2IL_Temp`. Cpp2IL exits at 02:52:06 and the game writes `MethodXrefScanCache.db` at 02:54:26. The game was still running when the analyst stopped the capture.
 
 ### Sandbox tags and heuristics reviewed
 
-- **"Executing a file with an untrusted certificate" (`tmpueu2jt.tmp.exe`, `dotnet-runtime-6.0.36-win-x64.exe`).** Not supported. In my run the file is the Microsoft .NET installer, fetched from a Microsoft host over a Microsoft-issued TLS certificate. I did not check the file's embedded signature, so I cannot say what produced the sandbox's "untrusted" verdict. A guest without current root certificates would trigger it; my capture shows the guest fetching `authrootstl.cab` from Windows Update in the same window (frame 21,675).
-- **"Changes the autorun value in the registry."** Not reproduced. The Regshot diff has no `Run`, `RunOnce` or related key. Burn installers normally create a `RunOnce` resume entry during setup and delete it on success, which a net diff would not show. I could not see it either way because Procmon had no registry operations.
+- **"Executing a file with an untrusted certificate" (`tmpueu2jt.tmp.exe`, `dotnet-runtime-6.0.36-win-x64.exe`).** Not supported. In the local run the file is the Microsoft .NET installer, fetched from a Microsoft host over a Microsoft-issued TLS certificate. The analyst did not check the file's embedded signature, so the analyst cannot say what produced the sandbox's "untrusted" verdict. A guest without current root certificates would trigger it; the local capture shows the guest fetching `authrootstl.cab` from Windows Update in the same window (frame 21,675).
+- **"Changes the autorun value in the registry."** Not reproduced. The Regshot diff has no `Run`, `RunOnce` or related key. Burn installers normally create a `RunOnce` resume entry during setup and delete it on success, which a net diff would not show. The analyst could not see it either way because Procmon had no registry operations.
 - **"Starts itself from another location" and "Executable content was dropped or overwritten."** The Burn clean-room and elevated copies under `C:\Windows\Temp\{GUID}\.cr` and `.be` explain both.
 - **"Process creates files with name similar to system file names."** `msiexec.exe` writing `C:\Config.Msi\*.rbs` rollback files, and WinRAR in the sandbox, are normal.
 - **"Starts CMD.EXE for commands execution."** `cmd.exe` runs the shipped `.bat` launcher, which only runs `winget`, `cd` and `start`.
 - **"Searches for installed software" and "Reads the Windows owner or organization settings."** Both are routine for MSI and Burn setup.
 - **Windows telemetry.** The `client.wns.windows.com` connections every 30 s, `licensing.mp.microsoft.com`, `ctldl.windowsupdate.com` and `dns.msftncsi.com` are Windows, not the sample. `taskhostw.exe` and `smartscreen.exe` activity is also Windows.
-- **Loopback to port 15881.** Repeated reconnects to a local port with no listener look like beaconing in a flat list. No packet leaves the machine, and I did not trace what the game expects there.
-- **Wireshark helper processes.** `USBPcapCMD.exe`, `etwdump.exe` and the `Conhost.exe` rows at 02:49:10 are Wireshark's capture interface helpers from my own tool folder, 23 s before the launcher ran.
+- **Loopback to port 15881.** Repeated reconnects to a local port with no listener look like beaconing in a flat list. No packet leaves the machine, and the analyst did not trace what the game expects there.
+- **Wireshark helper processes.** `USBPcapCMD.exe`, `etwdump.exe` and the `Conhost.exe` rows at 02:49:10 are Wireshark's capture interface helpers from the analyst's own tool folder, 23 s before the launcher ran.
 
 ## Reverse engineering notes
 
-This is string-level static work only; I did not decompile anything.
+This is string-level static work only; the analyst did not decompile anything.
 
-- `PvZ_Fusion_Translator.dll` is a 32-bit .NET assembly built for MelonLoader/IL2CPP. Its strings include `HttpClient` and the `raw.githubusercontent.com/Teyliu/PVZF-Translation/…` URLs above. I found no credential-store, browser-profile, webhook or token strings in it.
+- `PvZ_Fusion_Translator.dll` is a 32-bit .NET assembly built for MelonLoader/IL2CPP. Its strings include `HttpClient` and the `raw.githubusercontent.com/Teyliu/PVZF-Translation/…` URLs above. The analyst found no credential-store, browser-profile, webhook or token strings in it.
 - `Blooms_QOL.dll` is a small 12 kB assembly that references only game types (`Plant`, `Board`, `Magnetshroom`, `SuperMachineNut`) and has no network references in strings.
-- `ModUpdateUtil.exe` is a 62 MB .NET single-file bundle, so `strings` only shows the runtime. Its update URL is not visible. I inferred the destination from the packet capture. Its `.update` string is present.
+- `ModUpdateUtil.exe` is a 62 MB .NET single-file bundle, so `strings` only shows the runtime. Its update URL is not visible. The analyst inferred the destination from the packet capture. Its `.update` string is present.
 - `PlantsVsZombiesRH.exe` and `GameAssembly.dll` (59 MB) were not examined.
 
 ## Detection
@@ -228,7 +228,7 @@ Do not alert on the pack itself. Alert on deviations from the behaviour below.
 
 ## MITRE ATT&CK
 
-This table lists what I observed, not claimed attacker behaviour. None of it is malicious in this run. Tags are analyst mappings; I did not use the sandbox's matrix.
+This table lists what the analyst observed, not claimed attacker behaviour. None of it is malicious in this run. Tags are analyst mappings; the analyst did not use the sandbox's matrix.
 
 | Tactic | Technique | Evidence |
 |---|---|---|
@@ -243,17 +243,17 @@ Techniques deliberately not tagged: Masquerading (Burn's `.cr` and `.be` copies 
 
 **From the code only.** The translator DLL contains the GitHub update URLs and an `HttpClient` reference. Neither mod DLL contains webhook, token, password or browser-profile strings. This rests on `strings` output and is not proof of absence.
 
-**Inferred.** The .NET installer is genuine, because it came from a Microsoft host with a Microsoft certificate and registered Microsoft-named products. The hosted sandbox's "untrusted certificate" tag probably comes from the guest lacking current root certificates. The project is a community mod that follows the usual MelonLoader pattern. On this evidence I rate the pack as **not malicious**.
+**Inferred.** The .NET installer is genuine, because it came from a Microsoft host with a Microsoft certificate and registered Microsoft-named products. The hosted sandbox's "untrusted certificate" tag probably comes from the guest lacking current root certificates. The project is a community mod that follows the usual MelonLoader pattern. On this evidence the analyst rates the pack as **not malicious**.
 
 **Not established.**
-- What the two downloaded `.dll.update` files contain, or whether they match the DLLs in the zip. I did not capture them. A malicious update could be served later and would not show in this run.
+- What the two downloaded `.dll.update` files contain, or whether they match the DLLs in the zip. The analyst did not capture them. A malicious update could be served later and would not show in this run.
 - The Authenticode signature of `tmpf42shz.tmp.exe` and of the five executables in the zip.
 - The behaviour of `ModUpdateUtil.exe` internally (62 MB bundle, not decompiled), `GameAssembly.dll` and `PlantsVsZombiesRH.exe`.
 - Mutexes, and any registry value created and removed within the run, because Procmon had no registry operations and Regshot shows net change.
 - What listens on, or is expected at, `127.0.0.1:15881`.
 - The 27 MB SMB stream to 192.168.122.10 (not analysed).
 - The `Chinese Vanilla` launcher beyond its size and hash, and the pack's behaviour on a machine with different .NET state.
-- Whether the sample from the sandbox submission is byte-identical to my zip. I have no hash for it.
+- Whether the sample from the sandbox submission is byte-identical to the analyst's zip. the analyst has no hash for it.
 
 The residual risk is the update channel. Anyone who controls the GitHub repository can change the code the game loads on the next launch, so run it only from the official release and treat a repository ownership change as a reason to re-check.
 
@@ -261,17 +261,17 @@ The residual risk is the update channel. Anyone who controls the GitHub reposito
 
 | Earlier report | What the data shows |
 |---|---|
-| Hosted sandbox: "Changes the autorun value in the registry" by `dotnet-runtime-6.0.36-win-x64.exe`. | No `Run` or `RunOnce` value in the Regshot diff in my run. Likely the Burn installer's temporary resume entry, which I could not see. |
-| Hosted sandbox: "Executing a file with an untrusted certificate". | The file I ran came from a Microsoft host over a Microsoft-issued certificate. Signature not verified. |
-| My report, Background: the repository passes the contributor and code-frequency checks, "I am inferring that the PvZ-Fusion repository is legitimate". | The run supports this. It adds that the safety rests on the update channel, which the repository check cannot cover. |
-| My report, Execution flow, IOC and YARA sections: empty template. | Filled in above. No YARA rule is written, because there is no malicious sample to detect. |
-| My report, Background: installer named `tmpueu2jt.tmp.exe`. | The name is random per run. Mine was `tmpf42shz.tmp.exe`. |
+| Hosted sandbox: "Changes the autorun value in the registry" by `dotnet-runtime-6.0.36-win-x64.exe`. | No `Run` or `RunOnce` value in the Regshot diff in the local run. Likely the Burn installer's temporary resume entry, which the analyst could not see. |
+| Hosted sandbox: "Executing a file with an untrusted certificate". | The file the analyst ran came from a Microsoft host over a Microsoft-issued certificate. Signature not verified. |
+| The analyst's report, Background: the repository passes the contributor and code-frequency checks, "the analyst is inferring that the PvZ-Fusion repository is legitimate". | The run supports this. It adds that the safety rests on the update channel, which the repository check cannot cover. |
+| The analyst's report, Execution flow, IOC and YARA sections: empty template. | Filled in above. No YARA rule is written, because there is no malicious sample to detect. |
+| The analyst's report, Background: installer named `tmpueu2jt.tmp.exe`. | The name is random per run. Mine was `tmpf42shz.tmp.exe`. |
 
-*Sources: my ODT report, `Logfile.CSV` and `Logfile.PML`, Regshot `~res-x64.txt` plus the two `.hivu` hives (diff text only), `pvz.pcapng` read with tshark, and `strings` on `ModUpdateUtil.exe`, `PvZ_Fusion_Translator.dll` and `Blooms_QOL.dll`. The two `.hivu` hives, the PML and the game assets were not analysed beyond that.*
+*Sources: the analyst's ODT report, `Logfile.CSV` and `Logfile.PML`, Regshot `~res-x64.txt` plus the two `.hivu` hives (diff text only), `pvz.pcapng` read with tshark, and `strings` on `ModUpdateUtil.exe`, `PvZ_Fusion_Translator.dll` and `Blooms_QOL.dll`. The two `.hivu` hives, the PML and the game assets were not analysed beyond that.*
 
 ## References
 
-- Standalone execution-chain report (my artifact, private until shared): https://claude.ai/artifact/N8F1pMhS9Ts4RooZEsxoRs
+- Standalone execution-chain report (the analyst's artifact, private until shared): https://claude.ai/artifact/N8F1pMhS9Ts4RooZEsxoRs
 - Hosted sandbox report: https://tria.ge/261025-f36rvad14x
 - Repository checked: https://github.com/Teyliu/PVZF-Translation
 - Comparison repository (malicious, not to be downloaded): `propound294936-wanders/Secret-Glory-Hole-Leaked-2026`
