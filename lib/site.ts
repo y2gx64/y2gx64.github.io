@@ -4,12 +4,12 @@ const basePath = process.env.BASE_PATH ?? ""; // "" for <user>.github.io, "/<rep
 const origin = process.env.SITE_ORIGIN ?? "http://localhost:3000"; // e.g. https://<user>.github.io
 
 export const site = {
-  name: "Your Name",
-  title: "Your Name's Blog",
+  name: "Y2GX64",
+  title: "Y2GX64 Blog",
   description: "Notes on code, projects and things I'm learning.",
-  bio: "I write about software, side projects and what I learn along the way.",
-  githubUser: "your-github-username",
-  repoUrl: "https://github.com/your-github-username/your-repo",
+  bio: "Y2GX64, i write about malware that i analyse during my free time.",
+  githubUser: "y2gx64",
+  repoUrl: "https://github.com/y2gx64/y2gx64.github.io",
   basePath,
   origin,
   /** absolute URL of the site root, no trailing slash */
@@ -18,6 +18,6 @@ export const site = {
     { key: "H", label: "HOME", href: "/" },
     { key: "P", label: "POSTS", href: "/blog/" },
     { key: "A", label: "ABOUT", href: "/about/" },
-    { key: "G", label: "GITHUB", href: "https://github.com/your-github-username" },
+    { key: "G", label: "GITHUB", href: "https://github.com/y2gx64" },
   ],
 };
