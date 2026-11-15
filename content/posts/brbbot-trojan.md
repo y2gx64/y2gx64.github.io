@@ -1,18 +1,18 @@
 ---
-title: "Brbbot: a trojan that copies itself, hides its config in a resource and tells a server what is running on your PC every 30 seconds"
-description: A walk through brbbot.exe from launch to beacon, built from my own lab analysis with Process Monitor, ProcDOT, Wireshark and IDA. Covers the persistence, the delayed self-delete my first report missed, how the RC4 config and XOR-encoded process list work, and corrections to the first report.
+title: "Trojan:Win32/Brbbot!exe(Brbbot.exe)"
+description: "`f47060d0…8f05034a21e.exe` is a 75,776-byte 64-bit PE file, not packed, with a header timestamp of 2015-02-25 06:12:18 UTC (can be altered). It was run on a Windows 10 x64 guest as administrator from `C:\\binaries\\brbbot\\`, with INetSim and Wireshark on a REMnux VM."
 authors: [Y2GX64]
 category: Malware Analysis
 date: 2026-10-27
 ---
 
-*Analysis dates: the detonation and packet capture ran on 29 July 2026 on an isolated Windows 10 VM. My report is version 1.0. This post re-checks that report against the raw Procmon, Wireshark and configuration files, so a few details differ from the PDF. Those differences are listed below.*
+*Analysis dates: the detonation and packet capture ran on 29 July 2026 on an isolated Windows 10 VM. The analyst's report is version 1.0. This post re-checks that report against the raw Procmon, Wireshark and configuration files, so a few details differ from the PDF. Those differences are listed below.*
 
 ## Summary
 
 Brbbot is a small 64-bit Windows trojan, 75,776 bytes, with no packing and no child processes. It does four things in the first second after launch. It copies itself to the user's Roaming folder, writes a machine-wide Run key that points at the copy, queues the original file and its config for deletion at the next reboot, and decrypts a 73-byte settings string it carries as a resource. Then it starts a loop. Every 30 seconds it sends the victim's IP address, computer name and a list of every running process to `brb.3dtuts.by`.
 
-My lab network answered with INetSim's default web page. The configuration lists five command words (`exec`, `file`, `conf`, `exit`, `sleep`), so a real server could probably run programs or push files, but **nothing in my capture exercised them**. What I can show is a persistent beacon and a fingerprinting channel. I can't show what a live operator would have done with it.
+The analyst's lab network answered with INetSim's default web page. The configuration lists five command words (`exec`, `file`, `conf`, `exit`, `sleep`), so a real server could probably run programs or push files, but **nothing in the local capture exercised them**. What the analyst can show is a persistent beacon and a fingerprinting channel. The analyst can't show what a live operator would have done with it.
 
 | | |
 |---|---|
@@ -20,7 +20,7 @@ My lab network answered with INetSim's default web page. The configuration lists
 | SHA-256 | `f47060d0f7de5ee651878eb18dd2d24b5003bdb03ef4f49879f448f05034a21e` |
 | SHA-1 | `4db5a8e237937b6d7b435a8506b8584121a7e9e3` |
 | MD5 | `1c7243c8f3586b799a5f9a2e4200aa92` |
-| Header timestamp | 2015-02-25 06:12:18 UTC (can be forged, so I do not rely on it) |
+| Header timestamp | 2015-02-25 06:12:18 UTC (can be forged, so the analyst does not rely on it) |
 | Environment | Windows 10 x64 guest, run as administrator from `C:\binaries\brbbot\`, INetSim and Wireshark on a REMnux VM |
 | Telemetry | Procmon (2,940 brbbot events), ProcDOT, Wireshark (737 frames, 265 s), FLOSS, IDA, CyberChef |
 
@@ -38,7 +38,7 @@ A standalone, print-ready execution-chain report with every registry value, path
 
 ## High-level overview
 
-<figure class="art-fig art-diagram"><div class="fig-head"><div class="fig-title">Brbbot at a glance</div><div class="fig-sub">Everything the sample did in my capture, in order</div></div><div class="fig-draw" role="img" aria-label="Run, copy to Roaming, set the Run key, queue deletion of the original and the config at reboot, decrypt the embedded config, collect IP, hostname and process list, then beacon to brb.3dtuts.by every 30 seconds."><svg viewBox="0 0 560 400" width="560" height="400" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" style="font-family:var(--sans);max-width:100%;height:auto"><path d="M11 26 L11 374" fill="none" stroke-width="1" style="stroke:var(--line)"/><circle cx="11" cy="26" r="7" style="fill:var(--bg);stroke:var(--ink-3)" stroke-width="1.2"/><text x="34" y="24" font-size="15" style="fill:var(--ink)">Run as brbbot.exe</text><text x="34" y="42" font-size="13" style="fill:var(--ink-3)">From C:\binaries\brbbot, with administrator rights</text><circle cx="11" cy="84" r="7" style="fill:var(--bg);stroke:var(--ink-3)" stroke-width="1.2"/><text x="34" y="82" font-size="15" style="fill:var(--ink)">Copy to Roaming</text><text x="34" y="100" font-size="13" style="fill:var(--ink-3)">C:\Users\&lt;user&gt;\AppData\Roaming\brbbot.exe</text><circle cx="11" cy="142" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="142" r="3" style="fill:var(--accent)"/><text x="34" y="140" font-size="15" style="fill:var(--ink)">Set the Run key</text><text x="34" y="158" font-size="13" style="fill:var(--ink-3)">HKLM\...\Run\brbbot points at the copy</text><circle cx="11" cy="200" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="200" r="3" style="fill:var(--accent)"/><text x="34" y="198" font-size="15" style="fill:var(--ink)">Queue deletions</text><text x="34" y="216" font-size="13" style="fill:var(--ink-3)">PendingFileRenameOperations removes the original and the config at next boot</text><circle cx="11" cy="258" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="258" r="3" style="fill:var(--accent)"/><text x="34" y="256" font-size="15" style="fill:var(--ink)">Decrypt the config</text><text x="34" y="274" font-size="13" style="fill:var(--ink-3)">Resource CONFIG, MD5 of YnJiYm90 as the RC4 key</text><circle cx="11" cy="316" r="7" style="fill:var(--bg);stroke:var(--ink-3)" stroke-width="1.2"/><text x="34" y="314" font-size="15" style="fill:var(--ink)">Collect</text><text x="34" y="332" font-size="13" style="fill:var(--ink-3)">IP, hostname and process names, XOR 0x5B then hex</text><circle cx="11" cy="374" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="374" r="3" style="fill:var(--accent)"/><text x="34" y="372" font-size="15" style="fill:var(--ink)">Beacon every 30 s</text><text x="34" y="390" font-size="13" style="fill:var(--ink-3)">GET brb.3dtuts.by/ads.php. The sinkhole never answered with a command</text></svg></div></figure>
+<figure class="art-fig art-diagram"><div class="fig-head"><div class="fig-title">Brbbot at a glance</div><div class="fig-sub">Everything the sample did in the local capture, in order</div></div><div class="fig-draw" role="img" aria-label="Run, copy to Roaming, set the Run key, queue deletion of the original and the config at reboot, decrypt the embedded config, collect IP, hostname and process list, then beacon to brb.3dtuts.by every 30 seconds."><svg viewBox="0 0 560 400" width="560" height="400" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" style="font-family:var(--sans);max-width:100%;height:auto"><path d="M11 26 L11 374" fill="none" stroke-width="1" style="stroke:var(--line)"/><circle cx="11" cy="26" r="7" style="fill:var(--bg);stroke:var(--ink-3)" stroke-width="1.2"/><text x="34" y="24" font-size="15" style="fill:var(--ink)">Run as brbbot.exe</text><text x="34" y="42" font-size="13" style="fill:var(--ink-3)">From C:\binaries\brbbot, with administrator rights</text><circle cx="11" cy="84" r="7" style="fill:var(--bg);stroke:var(--ink-3)" stroke-width="1.2"/><text x="34" y="82" font-size="15" style="fill:var(--ink)">Copy to Roaming</text><text x="34" y="100" font-size="13" style="fill:var(--ink-3)">C:\Users\&lt;user&gt;\AppData\Roaming\brbbot.exe</text><circle cx="11" cy="142" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="142" r="3" style="fill:var(--accent)"/><text x="34" y="140" font-size="15" style="fill:var(--ink)">Set the Run key</text><text x="34" y="158" font-size="13" style="fill:var(--ink-3)">HKLM\...\Run\brbbot points at the copy</text><circle cx="11" cy="200" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="200" r="3" style="fill:var(--accent)"/><text x="34" y="198" font-size="15" style="fill:var(--ink)">Queue deletions</text><text x="34" y="216" font-size="13" style="fill:var(--ink-3)">PendingFileRenameOperations removes the original and the config at next boot</text><circle cx="11" cy="258" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="258" r="3" style="fill:var(--accent)"/><text x="34" y="256" font-size="15" style="fill:var(--ink)">Decrypt the config</text><text x="34" y="274" font-size="13" style="fill:var(--ink-3)">Resource CONFIG, MD5 of YnJiYm90 as the RC4 key</text><circle cx="11" cy="316" r="7" style="fill:var(--bg);stroke:var(--ink-3)" stroke-width="1.2"/><text x="34" y="314" font-size="15" style="fill:var(--ink)">Collect</text><text x="34" y="332" font-size="13" style="fill:var(--ink-3)">IP, hostname and process names, XOR 0x5B then hex</text><circle cx="11" cy="374" r="7" style="fill:var(--bg);stroke:var(--accent)" stroke-width="1.2"/><circle cx="11" cy="374" r="3" style="fill:var(--accent)"/><text x="34" y="372" font-size="15" style="fill:var(--ink)">Beacon every 30 s</text><text x="34" y="390" font-size="13" style="fill:var(--ink-3)">GET brb.3dtuts.by/ads.php. The sinkhole never answered with a command</text></svg></div></figure>
 
 ## Indicators of compromise
 
@@ -70,7 +70,7 @@ One, verbatim from Procmon: `"C:\binaries\brbbot\brbbot.exe" `, PID 6796, parent
 
 | Indicator | Notes |
 |---|---|
-| `brb.3dtuts.by` | C2 host. DNS frame 303 and Host header of all 8 requests. Lab DNS pointed it at my INetSim box |
+| `brb.3dtuts.by` | C2 host. DNS frame 303 and Host header of all 8 requests. Lab DNS pointed it at the analyst's INetSim box |
 | `/ads.php?i=<ip>&c=<hostname>&p=<hex>` | Beacon URI. The format string `%s?i=%s&c=%s&p=%s` is in the binary |
 | `Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)` | Hard-coded user agent. Claims Windows 7 even on Windows 10 |
 | Port 80, one new TCP connection per beacon, 30 s apart | Plain HTTP, no encryption |
@@ -91,7 +91,7 @@ Within a millisecond of the copy it opens the HKLM Run key for writing, sets `br
 
 ### 4. Queue the clean-up
 
-The step my first report missed. Right after the Run key the worker writes `PendingFileRenameOperations` twice. The first write lists the original `brbbot.exe` with an empty target. The second adds `brbconfig.tmp`. Between them Procmon shows a `CreateFile` on `brbconfig.tmp` returning NAME NOT FOUND, so the config is queued for deletion before it exists. After a reboot the original and the config disappear and only the Roaming copy remains. I did not reboot, so the deletion itself is not observed, and my reading depends on how Windows treats an empty target.
+The step the analyst's first report missed. Right after the Run key the worker writes `PendingFileRenameOperations` twice. The first write lists the original `brbbot.exe` with an empty target. The second adds `brbconfig.tmp`. Between them Procmon shows a `CreateFile` on `brbconfig.tmp` returning NAME NOT FOUND, so the config is queued for deletion before it exists. After a reboot the original and the config disappear and only the Roaming copy remains. The analyst did not reboot, so the deletion itself is not observed, and the analyst's reading depends on how Windows treats an empty target.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">What brbbot touched</div><div class="fig-sub">ProcDOT graph of PID 6796, worker thread 6820 and WinINet thread 7724</div></div><div class="fig-draw"><img src="/shared/img/brbbot/procdot-overview.jpg" alt="ProcDOT graph with brbbot.exe PID 6796 connected to threads 6820 and 7724, the files brbbot.exe and brbconfig.tmp, the brbbot autostart key, a Crypto RSA key file, SOFTWARE.LOG1, an HTML file and the server 192.168.122.10" width="1508" height="643" loading="lazy" /></div></figure>
 
@@ -103,7 +103,7 @@ IDA shows the function that does this.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Writing the config</div><div class="fig-sub">IDA: FindResourceA on CONFIG, then CreateFileA("brbconfig.tmp") and WriteFile</div></div><div class="fig-draw"><img src="/shared/img/brbbot/code-create-config.jpg" alt="Decompiled function create_brbconfig calling FindResourceA with the name CONFIG, LoadResource, LockResource, CreateFileA brbconfig.tmp and WriteFile" width="1023" height="582" loading="lazy" /></div></figure>
 
-It calls `FindResourceA` for the `CONFIG` resource, then `CreateFileA("brbconfig.tmp")` and `WriteFile`. Procmon logs a 73-byte write at 01:25:32.3629 and a 73-byte read at .3890. I also found the same 73 bytes in the executable at file offset 74352.
+It calls `FindResourceA` for the `CONFIG` resource, then `CreateFileA("brbconfig.tmp")` and `WriteFile`. Procmon logs a 73-byte write at 01:25:32.3629 and a 73-byte read at .3890. The analyst also found the same 73 bytes in the executable at file offset 74352.
 
 The next function hashes the string `YnJiYm90` (that is base64 for `brbbot`) with MD5, calls `CryptDeriveKey` with Algid `0x6801` (RC4) and decrypts the file. MD5 of the string is `e2834a5bba1c28b7f536bd3ec5f1d8e0`. With that as the RC4 key the file becomes:
 
@@ -113,7 +113,7 @@ uri=ads.php;exec=cexe;file=elif;conf=fnoc;exit=tixe;encode=5b;sleep=30000
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Decrypted configuration</div><div class="fig-sub">CyberChef: RC4 with the MD5 of YnJiYm90 over the 73-byte brbconfig.tmp</div></div><div class="fig-draw"><img src="/shared/img/brbbot/cyberchef-config.jpg" alt="CyberChef RC4 recipe on the 73 byte brbconfig.tmp with output uri=ads.php;exec=cexe;file=elif;conf=fnoc;exit=tixe;encode=5b;sleep=30000" width="1218" height="737" loading="lazy" /></div></figure>
 
-Reading it: `uri` is the page the beacon requests. `exec`, `file`, `conf` and `exit` are the four command words with their values, and the values are simply the words reversed or mangled (`exec` becomes `cexe`, `file` becomes `elif`, `conf` becomes `fnoc`, `exit` becomes `tixe`). `encode=5b` is the XOR key for the data it sends. `sleep=30000` is the delay in milliseconds. Running the CryptoAPI code also makes Windows create a key-container file under `Microsoft\Crypto\RSA`, which is a side effect and not an attacker file.
+Reading it: `uri` is the page the beacon requests. `exec`, `file`, `conf` and `exit` are the four command words with their values, and the values are the words reversed or mangled (`exec` becomes `cexe`, `file` becomes `elif`, `conf` becomes `fnoc`, `exit` becomes `tixe`). `encode=5b` is the XOR key for the data it sends. `sleep=30000` is the delay in milliseconds. Running the CryptoAPI code also makes Windows create a key-container file under `Microsoft\Crypto\RSA`, which is a side effect and not an attacker file.
 
 ### 6. Collect
 
@@ -125,7 +125,7 @@ Each name is joined with `;`, XOR-ed with 0x5B and written as two hex digits per
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Hex encoding</div><div class="fig-sub">IDA: sprintf("%02x") over each byte of the buffer</div></div><div class="fig-draw"><img src="/shared/img/brbbot/code-hex-encode.jpg" alt="Decompiled loop calling sprintf with format %02x for each byte and advancing the output pointer by two" width="838" height="303" loading="lazy" /></div></figure>
 
-Decoding frame 308 this way gives 122 names starting `Idle;System;Registry;smss.exe;csrss.exe;...` and ending with `Procmon64.exe;procexp64.exe;Wireshark.exe;dumpcap.exe;conhost.exe;...;brbbot.exe`. The list therefore also tells the server which analysis tools are running. The sample does not act on that in my capture.
+Decoding frame 308 this way gives 122 names starting `Idle;System;Registry;smss.exe;csrss.exe;...` and ending with `Procmon64.exe;procexp64.exe;Wireshark.exe;dumpcap.exe;conhost.exe;...;brbbot.exe`. The list therefore also tells the server which analysis tools are running. The sample does not act on that in the local capture.
 
 ### 7. Beacon
 
@@ -148,7 +148,7 @@ The gaps are 30.0 to 30.1 seconds, matching `sleep=30000`. The count falls when 
 
 ### 8. End
 
-I let it run about six minutes and then killed it.
+The analyst let it run about six minutes and then killed it.
 
 ### Sandbox tags and heuristics reviewed
 
@@ -196,25 +196,25 @@ rule Brbbot_Beacon_Trojan
 
 **Observed.** The self-copy, the Run key, both `PendingFileRenameOperations` writes, the config write and read, all 8 beacons with their frame ranges, the DNS lookup, and the content of every `p=` value (decoded from the capture with the key from the decrypted config).
 
-**From the code only.** The MD5 and RC4 derivation, the `ZwQuerySystemInformation` class, the `%02x` encoding and the meaning of the command words. I decrypted the config by hand and it came out as readable text, which supports that reading, but no command was ever delivered.
+**From the code only.** The MD5 and RC4 derivation, the `ZwQuerySystemInformation` class, the `%02x` encoding and the meaning of the command words. The analyst decrypted the config by hand and it came out as readable text, which supports that reading, but no command was ever delivered.
 
 **Inferred.** That the empty-target entries delete the files at reboot, that the command words are tasking verbs, that the IP address comes from an IP Helper call, and that the Roaming copy has the same hash as the sample.
 
-**Not established.** What a live server replies with, what the sample does after a reboot or after an `exec` or `file` reply, whether the Run key launches the copy successfully, and whether the 2015 header timestamp is real. Only one run has telemetry, so I cannot say whether other runs behave identically.
+**Not established.** What a live server replies with, what the sample does after a reboot or after an `exec` or `file` reply, whether the Run key launches the copy successfully, and whether the 2015 header timestamp is real. Only one run has telemetry, so the analyst cannot say whether other runs behave identically.
 
 ### Corrections to earlier reports
 
-Going back to the raw files turned up several points where my report was wrong or incomplete:
+Going back to the raw files turned up several points where the analyst's report was wrong or incomplete:
 
-- **The domain is `brb.3dtuts.by`.** My text, flow figure and IOC table spell it `3duts.by`. Anyone blocking my spelling would block nothing.
-- **`239.255.255.250:1900` is not brbbot.** I read Wireshark's HTTP request list as the sample trying to reach that address. It is an SSDP `M-SEARCH` sent by `192.168.122.1`, the host bridge, and it is multicast, not a server.
+- **The domain is `brb.3dtuts.by`.** The analyst's text, flow figure and IOC table spell it `3duts.by`. Anyone blocking the analyst's spelling would block nothing.
+- **`239.255.255.250:1900` is not brbbot.** The analyst read Wireshark's HTTP request list as the sample trying to reach that address. It is an SSDP `M-SEARCH` sent by `192.168.122.1`, the host bridge, and it is multicast, not a server.
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">Process Explorer</div><div class="fig-sub">brbbot.exe shows PID 4060 here, but 6796 in Procmon and ProcDOT</div></div><div class="fig-draw"><img src="/shared/img/brbbot/procexp.jpg" alt="Process Explorer tree showing brbbot.exe under explorer.exe next to Procmon64, procexp64 and Wireshark with dumpcap" width="863" height="704" loading="lazy" /></div></figure>
 
-- **The Run key path was garbled.** I wrote `...\Runbrbbot\`. The key is `...\CurrentVersion\Run` and `brbbot` is the value name.
-- **I missed `PendingFileRenameOperations`.** It is visible in my own ProcDOT screenshot but I never described it.
+- **The Run key path was garbled.** the analyst wrote `...\Runbrbbot\`. The key is `...\CurrentVersion\Run` and `brbbot` is the value name.
+- **The analyst missed `PendingFileRenameOperations`.** It is visible in the analyst's own ProcDOT screenshot but the analyst never described it.
 - **The CyberChef screenshot shows a truncated key.** The passphrase field reads `bd3ec5f1d8e0`, the last 6 bytes of the MD5. The full 16 bytes decrypt the file. Those 6 bytes alone do not.
-- **Process Explorer shows a different PID.** brbbot is PID 4060 there and 6796 in Procmon and ProcDOT, so that screenshot is from another execution, whose logs I did not keep. All numbers in this post are from the 6796 run.
+- **Process Explorer shows a different PID.** brbbot is PID 4060 there and 6796 in Procmon and ProcDOT, so that screenshot is from another execution, whose logs the analyst did not keep. All numbers in this post are from the 6796 run.
 - **The `p=` value is not an opaque payload.** It is a hex string of XOR-encoded process names, and it decodes with the config's own `encode=5b`.
 
 ## References

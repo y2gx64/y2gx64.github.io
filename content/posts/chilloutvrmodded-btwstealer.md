@@ -1,6 +1,6 @@
 ---
-title: "BtwStealer: fake VRChat mods that steal browser data and report to Discord"
-description: Seven "mods" from chilloutvrmodded[.]net turned out to be one launcher that stages an embedded Python stealer and exfiltrates to Discord, GoFile and Catbox. Execution chain from four sandbox runs, two packet captures and a local run with the webhook recovered.
+title: "PWS:Win32/UnknownFamily!exe(chilloutvrmod)"
+description: "`chilloutvrmodded_launcher.bnuy` is a 9,793,536-byte PE file with an overlay (80.6 MB on disk), obtained from `chilloutvrmodded[.]net`, which presents it as mods for VRChat. Triage submissions 260902-p413esyset and 260903-enhk2aeg96 each scored 8/10."
 authors: [Y2GX64]
 category: Malware Analysis
 date: 2026-10-23
@@ -249,7 +249,7 @@ The root cause: INetSim serves one static certificate (`CN=inetsim.org`, **no Su
 1. **"New Execution" beacon** (frame 209). An embed posted as the user `btwStealer` with a build ID (`27eb1da4aaa2b246`), a license "Plan" of `unlimited`, IP, hostname and username. This is what the 1.8 to 5.9 KB check-in sessions in section 7 contain. The "unlimited plan" field suggests a malware-as-a-service panel.
 2. **Victim screenshot** (frame 253). A multipart upload with a real PNG attached. These are the 404 to 572 KB bulk sessions.
 3. **Stolen-data ZIP** (frame 362). `btwStealerLOG_<id>.zip` attached directly. It was empty in the lab because there was no browser or wallet data to steal, but the delivery path matches.
-4. **"System Infos" summary** (frame 480). CPU, RAM, OS, antivirus (Windows Defender), uptime, and a "Stolen Data" download link. The link read `null` and the IP read `N/A` because INetSim's fake `ipinfo.io` page returned no real JSON. That is a lab artifact, not the stealer misbehaving.
+4. **"System Infos" summary** (frame 480). CPU, RAM, OS, antivirus (Windows Defender), uptime, and a "Stolen Data" download link. The link read `null` and the IP read `N/A` because INetSim's simulated `ipinfo.io` page returned no real JSON. That is a lab artifact, not the stealer misbehaving.
 
 **Redundant exfiltration.** The same archive was sent to all four GoFile storage nodes returned by `api.gofile.io/servers` (`store1` to `store4`), and to `catbox.moe` (`/user/api.php`) as an anonymous fallback.
 
@@ -281,7 +281,7 @@ The root cause: INetSim serves one static certificate (`CN=inetsim.org`, **no Su
 | Command and Control | T1102 Web Service | Discord and GoFile |
 | Exfiltration | T1567 Exfiltration Over Web Service | Discord and GoFile uploads. Analyst mapping, not in Triage's matrix |
 
-Triage's own matrix for the first run lists T1059.001, T1059.003, T1059.005, T1027.010, T1555.003, T1552.001, T1217, T1057, T1012, T1082, T1016.001, T1005 and T1102. T1567 and T1053 are my mappings.
+Triage's own matrix for the first run lists T1059.001, T1059.003, T1059.005, T1027.010, T1555.003, T1552.001, T1217, T1057, T1012, T1082, T1016.001, T1005 and T1102. T1567 and T1053 are the analyst's mappings.
 
 ## Confidence and limits
 

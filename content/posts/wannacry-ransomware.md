@@ -1,12 +1,12 @@
 ---
-title: "WannaCry: a kill-switch check, a ransomware toolkit with its own Tor client, and an SMB scan nobody answered"
-description: A walk through wannacry.exe from first launch to ransom screen, built from my own lab analysis and two Triage detonations with packet captures. Includes the full process chain, what the sandbox tags got wrong, and rules that were tested against the sample.
+title: "Ransom:Win32/Wannacry!exe(wannacry.exe)"
+description: "`wannacry.exe` is a 3,723,264-byte PE32 file with SHA-256 `24d004a1…b1022c`. Triage sample 261025-nq1n3ag14l scored 10/10, \"Known bad\", with the family label Wannacry, on Windows 10 and Windows 11 runs."
 authors: [Y2GX64]
 category: Malware Analysis
 date: 2026-10-25
 ---
 
-*Analysis dates: local lab run and static/code analysis on 9 August 2026; Triage detonations and packet captures on 25 October 2026. Everything ran inside isolated VMs. Screenshots come from my local run, which used the unique folder `utuksgkdlqz386`. Tables of process lines, registry values and traffic come from the two Triage runs, whose folders are `hiahnvaqd300` and `siflatfmsonert539`.*
+*Analysis dates: local lab run and static/code analysis on 9 August 2026; Triage detonations and packet captures on 25 October 2026. Everything ran inside isolated VMs. Screenshots come from the local run, which used the unique folder `utuksgkdlqz386`. Tables of process lines, registry values and traffic come from the two Triage runs, whose folders are `hiahnvaqd300` and `siflatfmsonert539`.*
 
 ## Summary
 
@@ -43,7 +43,7 @@ A standalone, print-ready execution-chain report with every registry value, comm
 
 ### Files
 
-`<UID>` is the per-host folder name. All hashes below are identical across the two Triage runs and my local run, except where noted.
+`<UID>` is the per-host folder name. All hashes below are identical across the two Triage runs and the local run, except where noted.
 
 | Path | Status | MD5 | Role |
 |---|---|---|---|
@@ -61,7 +61,7 @@ A standalone, print-ready execution-chain report with every registry value, comm
 
 No file was downloaded during the run: everything above is carried inside `wannacry.exe`. Victim documents are Modified (renamed to `.WNCRY`); they are not listed individually.
 
-`00000000.pky`, `00000000.eky` and `f.wnry` exist in my local run but are not listed by Triage in either run. Victim files get the `.WNCRY` suffix, with `.WNCRYT` temporaries in `C:\Windows\Temp`.
+`00000000.pky`, `00000000.eky` and `f.wnry` exist in the local run but are not listed by Triage in either run. Victim files get the `.WNCRY` suffix, with `.WNCRYT` temporaries in `C:\Windows\Temp`.
 
 ### Registry
 
@@ -69,9 +69,9 @@ No file was downloaded during the run: everything above is carried inside `wanna
 |---|---|---|
 | `HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run` | `<UID>` = `"C:\ProgramData\<UID>\tasksche.exe"` | Triage, both runs |
 | `HKU\<SID>\Control Panel\Desktop\Wallpaper` | path to the ransom bitmap on the Desktop | Triage, both runs |
-| `HKLM\SYSTEM\CurrentControlSet\Services\mssecsvc2.0` | `ImagePath` = `... wannacry.exe -m security`, DisplayName "Microsoft Security Center (2.0) Service" | My local run only |
-| `HKLM\SYSTEM\CurrentControlSet\Services\<UID>` | `ImagePath` = `cmd.exe /c "C:\ProgramData\<UID>\tasksche.exe"` | My local run only |
-| `HKLM\SOFTWARE\WOW6432Node\WanaCrypt0r` | `wd` = `C:\ProgramData\<UID>` | My local run only |
+| `HKLM\SYSTEM\CurrentControlSet\Services\mssecsvc2.0` | `ImagePath` = `... wannacry.exe -m security`, DisplayName "Microsoft Security Center (2.0) Service" | The analyst's local run only |
+| `HKLM\SYSTEM\CurrentControlSet\Services\<UID>` | `ImagePath` = `cmd.exe /c "C:\ProgramData\<UID>\tasksche.exe"` | The analyst's local run only |
+| `HKLM\SOFTWARE\WOW6432Node\WanaCrypt0r` | `wd` = `C:\ProgramData\<UID>` | The analyst's local run only |
 
 ### Mutexes
 
@@ -94,7 +94,7 @@ cmd.exe /c vssadmin delete shadows /all /quiet & wmic shadowcopy delete & bcdedi
 cmd.exe /c reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v "hiahnvaqd300" /t REG_SZ /d "\"C:\ProgramData\hiahnvaqd300\tasksche.exe\"" /f
 ```
 
-Triage's PDF masks `@WanaDecryptor@` as an email address; the name is restored here from my own file list.
+Triage's PDF masks `@WanaDecryptor@` as an email address; the name is restored here from the analyst's own file list.
 
 ### Network
 
@@ -104,7 +104,7 @@ Triage's PDF masks `@WanaDecryptor@` as an email address; the name is restored h
 | TCP/445 to about 3,100 (win10) and 3,400 (win11) distinct IPv4 addresses | Propagation scan, SYN only |
 | 11 and 8 Tor peers on ports 9001, 9101, 443 and 80 | Tor bootstrap by `taskhsvc.exe` (by inference), SYN only |
 | `12t9YDPgwueZ9NyMgw519p7AA8isjr6SMw` | Bitcoin address in the note and in `c.wnry` |
-| five `.onion` hosts in `c.wnry` (from my local copy) | Contact and payment sites. Not seen on the wire |
+| five `.onion` hosts in `c.wnry` (from the analyst's local copy) | Contact and payment sites. Not seen on the wire |
 
 ### Packet correlation
 
@@ -120,7 +120,7 @@ Both captures contain only traffic leaving the guest. There is no SYN-ACK, no TC
 
 The scan begins at about 26 seconds and runs at roughly 35 SYNs a second until capture ends. The Tor attempts begin at about 46 seconds and retry at 1, 2, 4 and 8 second intervals.
 
-<figure class="art-fig"><div class="fig-head"><div class="fig-title">The SMB scan</div><div class="fig-sub">My local lab capture, where a listener answered</div></div><div class="fig-draw"><img src="/shared/img/wannacry/smb-scan.jpg" alt="Wireshark filtered on smb showing many SMB Negotiate Protocol Request frames to different destinations" width="1532" height="614" loading="lazy" /></div><div class="fig-cap">Here SMB Negotiate requests appear. In the Triage captures nothing answered, so only SYNs exist.</div></figure>
+<figure class="art-fig"><div class="fig-head"><div class="fig-title">The SMB scan</div><div class="fig-sub">The analyst's local lab capture, where a listener answered</div></div><div class="fig-draw"><img src="/shared/img/wannacry/smb-scan.jpg" alt="Wireshark filtered on smb showing many SMB Negotiate Protocol Request frames to different destinations" width="1532" height="614" loading="lazy" /></div><div class="fig-cap">Here SMB Negotiate requests appear. In the Triage captures nothing answered, so only SYNs exist.</div></figure>
 
 ## Execution flow
 
@@ -130,13 +130,13 @@ In the decompiled `WinMain`, the sample opens the long domain with `InternetOpen
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">The check in code</div><div class="fig-sub">Decompiled WinMain</div></div><div class="fig-draw"><img src="/shared/img/wannacry/killswitch-code.jpg" alt="Decompiled code calling InternetOpenUrlA on http://www.iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com, closing handles if it succeeds, and calling another routine if it fails" width="714" height="422" loading="lazy" /></div></figure>
 
-<figure class="art-fig"><div class="fig-head"><div class="fig-title">The lookup on the wire</div><div class="fig-sub">Wireshark in my local lab, INetSim switched off</div></div><div class="fig-draw"><img src="/shared/img/wannacry/killswitch-dns.jpg" alt="Wireshark capture with a standard query for the kill-switch domain and ICMP destination unreachable replies" width="1531" height="721" loading="lazy" /></div><div class="fig-cap">With no resolver answering, the malware proceeds.</div></figure>
+<figure class="art-fig"><div class="fig-head"><div class="fig-title">The lookup on the wire</div><div class="fig-sub">Wireshark in the analyst's local lab, INetSim switched off</div></div><div class="fig-draw"><img src="/shared/img/wannacry/killswitch-dns.jpg" alt="Wireshark capture with a standard query for the kill-switch domain and ICMP destination unreachable replies" width="1531" height="721" loading="lazy" /></div><div class="fig-cap">With no resolver answering, the malware proceeds.</div></figure>
 
 ### 2. Service mode and the dropper
 
 Without arguments, the sample creates the service `mssecsvc2.0`, extracts `tasksche.exe` from its own PE resource and starts it. With an argument, most likely the `-m security` that the service passes, it changes the service configuration instead. Both instances appear in Triage.
 
-<figure class="art-fig"><div class="fig-head"><div class="fig-title">The first service</div><div class="fig-sub">services.msc in my local run</div></div><div class="fig-draw"><img src="/shared/img/wannacry/service-mssecsvc.jpg" alt="Properties of the Microsoft Security Center (2.0) Service, with path to executable ending in wannacry.exe -m security, startup type Automatic and status Running" width="779" height="578" loading="lazy" /></div></figure>
+<figure class="art-fig"><div class="fig-head"><div class="fig-title">The first service</div><div class="fig-sub">services.msc in the local run</div></div><div class="fig-draw"><img src="/shared/img/wannacry/service-mssecsvc.jpg" alt="Properties of the Microsoft Security Center (2.0) Service, with path to executable ending in wannacry.exe -m security, startup type Automatic and status Running" width="779" height="578" loading="lazy" /></div></figure>
 
 ### 3. Install into a unique folder
 
@@ -158,7 +158,7 @@ The sample drops its resource archive, runs `attrib +h .` to hide the folder, an
 
 ### 6. Scripts, decryptor modes and Tor
 
-A numeric batch file and `m.vbs` run, and `F:\$RECYCLE` is hidden. The decryptor starts with `co`, then `vs` through `cmd /c start /b`; the `vs` instance launches `taskhsvc.exe`. What `m.vbs` does is not visible in the logs. My local run produced `@WanaDecryptor@.exe.lnk`, which fits a shortcut role, but I did not read the script.
+A numeric batch file and `m.vbs` run, and `F:\$RECYCLE` is hidden. The decryptor starts with `co`, then `vs` through `cmd /c start /b`; the `vs` instance launches `taskhsvc.exe`. What `m.vbs` does is not visible in the logs. The analyst's local run produced `@WanaDecryptor@.exe.lnk`, which fits a shortcut role, but the analyst did not read the script.
 
 ### 7. Destroy recovery options
 
@@ -172,7 +172,7 @@ The one-line chain runs `vssadmin`, `wmic shadowcopy delete`, two `bcdedit` chan
 
 The encryptor loops: `taskdl.exe`, `taskse.exe` and the decryptor window start repeatedly (5, 4 and 4 times in the Windows 10 run; 6, 5 and 5 on Windows 11). Files become `<name>.WNCRY`, the wallpaper changes, and a window demands $300 in Bitcoin with two countdowns.
 
-<figure class="art-fig"><div class="fig-head"><div class="fig-title">The ransom window</div><div class="fig-sub">French-language version from my local run</div></div><div class="fig-draw"><img src="/shared/img/wannacry/ransom-screen.jpg" alt="Wana Decrypt0r 2.0 window titled Ooops, your files have been encrypted, with two countdowns, a payment demand of 300 dollars in bitcoin and a Bitcoin address" width="966" height="723" loading="lazy" /></div></figure>
+<figure class="art-fig"><div class="fig-head"><div class="fig-title">The ransom window</div><div class="fig-sub">French-language version from the local run</div></div><div class="fig-draw"><img src="/shared/img/wannacry/ransom-screen.jpg" alt="Wana Decrypt0r 2.0 window titled Ooops, your files have been encrypted, with two countdowns, a payment demand of 300 dollars in bitcoin and a Bitcoin address" width="966" height="723" loading="lazy" /></div></figure>
 
 <figure class="art-fig"><div class="fig-head"><div class="fig-title">The wallpaper</div><div class="fig-sub">Set from the ransom bitmap</div></div><div class="fig-draw"><img src="/shared/img/wannacry/wallpaper.jpg" alt="Black desktop background with red text: Ooops, your important files are encrypted, followed by instructions to run the Wana Decrypt0r program" width="800" height="600" loading="lazy" /></div></figure>
 
@@ -260,11 +260,11 @@ T1210 (Exploitation of Remote Services) is the intended use of the scan but was 
 
 ## Confidence and limits
 
-**Observed.** The full process chain and the Run value in both Triage runs, the shadow-copy command line, the `.WNCRY` outputs, the wallpaper change, the 10 unanswered kill-switch queries, the SMB and Tor SYN traffic, and identical hashes for every dropped executable and message file across both runs and my local run.
+**Observed.** The full process chain and the Run value in both Triage runs, the shadow-copy command line, the `.WNCRY` outputs, the wallpaper change, the 10 unanswered kill-switch queries, the SMB and Tor SYN traffic, and identical hashes for every dropped executable and message file across both runs and the local run.
 
-**From the code or my local run only.** The service-based persistence and the `WanaCrypt0r` registry key, the mutex string and its numeric suffix, the `WANACRY!` payload check, the five onion addresses and the Bitcoin address in `c.wnry`, and the decryptor's contact-form messages.
+**From the code or the local run only.** The service-based persistence and the `WanaCrypt0r` registry key, the mutex string and its numeric suffix, the `WANACRY!` payload check, the five onion addresses and the Bitcoin address in `c.wnry`, and the decryptor's contact-form messages.
 
-**Not established.** What `m.vbs` and the numbered batch file contain; why Triage shows a Run value while my lab shows services; whether the scan would have exploited anything, since nothing replied; and whether the Tor attempts belong to `taskhsvc.exe`, which is inferred from sequence because a capture carries no process names. Triage's PDF masks several `@WanaDecryptor@` names, so the role of a few masked files is unknown.
+**Not established.** What `m.vbs` and the numbered batch file contain; why Triage shows a Run value while the lab shows services; whether the scan would have exploited anything, since nothing replied; and whether the Tor attempts belong to `taskhsvc.exe`, which is inferred from sequence because a capture carries no process names. Triage's PDF masks several `@WanaDecryptor@` names, so the role of a few masked files is unknown.
 
 ## References
 

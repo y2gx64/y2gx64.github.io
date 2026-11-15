@@ -1,6 +1,6 @@
 ---
-title: "Hytale-Examples-Plugin-v2.2: a LuaJIT loader that screenshots your desktop"
-description: A fake Hytale plugin pack runs a disguised Lua script through a bundled LuaJIT interpreter, checks the victim's IP, contacts a public Polygon RPC node and uploads a full-HD screenshot over plain HTTP. How the chain works and what each step tells defenders.
+title: "PWS:Win32/UnknownFamily!bat(Launch.bat)"
+description: "`Hytale-Examples-Plugin-v2.2.zip` is a 573 KB archive presented as a Hytale plugin pack. Triage sample 260911-syv6rsyvdw scored 7/10, \"Shows suspicious behavior\", on Windows 10 and Windows 11 runs."
 authors: [Y2GX64]
 category: Malware Analysis
 date: 2026-10-24

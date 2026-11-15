@@ -7,13 +7,17 @@ thing in the same place. Copy `docs/post-skeleton.md`, fill it in, then run `npm
 
 ```yaml
 ---
-title: "Name: what it does, in one line"       # sample or family first, then a colon
-description: One or two sentences. What the post covers and one thing the reader will learn.
+title: "Type:Platform/Family.Variant!suffix"    # Microsoft malware name only, nothing after it
+description: Background of the sample, from the evidence only.
 authors: [Y2GX64]
 category: Malware Analysis
 date: YYYY-MM-DD
 ---
 ```
+
+**Title.** Use the Microsoft malware naming convention, `Type:Platform/Family.Variant!suffix` (for example `Ransom:MSIL/Cryptolocker.A`), and nothing after the name. Take the name from the analyst report or from a Microsoft detection that was checked. If the name is only a case label or is unverified, convert it to the Microsoft form, add a "Detection-style name" row to the Summary table stating the source and that it was not checked, and note any mismatch with the observed platform (for example a .NET file labelled `Win32` instead of `MSIL`). If no name exists, use a neutral descriptive title and say why.
+
+**Description.** Background of the sample: file size, architecture and framework, header timestamp (with the caveat that it can be altered), the name the sample uses for itself, and how it relates to earlier builds or families. Facts from the evidence only. No behaviour or findings, and no family history from outside sources.
 
 Opening italic line (before `## Summary`): analysis date, and what the post re-checks (report, sandbox runs, packet captures).
 
@@ -21,7 +25,7 @@ Opening italic line (before `## Summary`): analysis date, and what the post re-c
 
 | # | H2 | Contents |
 |---|---|---|
-| 1 | `## Summary` | 2 to 3 short paragraphs. One bold sentence with the headline finding. Then the fact table: Sample, SHA-256, Header timestamp, Environment, Evidence. Last line says whether a standalone execution-chain report accompanies the post. |
+| 1 | `## Summary` | 2 to 3 short paragraphs. One bold sentence with the headline finding. Then the fact table: Sample, SHA-256 (taken from the analyst report), Detection-style name (when the title uses one that is not verified), Header timestamp, Environment, Evidence. Last line says whether a standalone execution-chain report accompanies the post. |
 | 2 | `## Concepts used in this sample` | 4 to 6 bullets, term in bold, one or two sentences each. Define terms a newcomer needs for this post only. |
 | 3 | `## High-level overview` | The SVG "at a glance" figure (5 to 6 steps), then the analyst's own flow chart if one exists. |
 | 4 | `## Indicators of compromise` | H3s in this order, see below. |
@@ -65,6 +69,7 @@ Files, Registry, Mutexes, Command lines and Network are always present. Write "N
 - Separate confirmed attacker behaviour from coincidence and lab artifacts (INetSim answers, Windows telemetry).
 - Say which evidence was not analysed.
 - Use full absolute paths and verbatim command lines.
+- Flag sandbox heuristic false positives, and check which process each tag is attributed to (for example a browser in the sandbox).
 
 ## Figures
 
@@ -72,4 +77,9 @@ Use `<figure class="art-fig">` with `fig-head` (title, sub) and `fig-draw`; imag
 
 ## Style
 
-Plain sentences, first person for my own work, no emoji, no numbered H2s, "MITRE ATT&CK" spelled the same everywhere.
+Neutral and objective tone in every section, caption and diagram label.
+
+- State what was observed, not impressions. Do not state intent, quality or risk beyond the evidence.
+- No euphemisms or loaded words ("vanishes", "puts up", "fake", "odd", "killed", "obviously malicious"). Use plain terms: "terminates", "displays", "simulated internet", "does not match".
+- No first person ("I", "my") and no second person ("you", "your"). Use passive or impersonal wording: "the file was not decompiled", "the local run", "the analyst's report".
+- Plain sentences, no emoji, no numbered H2s, "MITRE ATT&CK" spelled the same everywhere.
