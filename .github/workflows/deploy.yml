@@ -12,12 +12,18 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
+      - name: Set base path
+        # user/org site (<owner>.github.io repo) -> no base path; project site -> /<repo>
+        # (done in shell: an empty string is falsy in `cond && '' || x` expressions)
+        run: |
+          case "$GITHUB_REPOSITORY" in
+            *.github.io) echo "BASE_PATH=" >> "$GITHUB_ENV" ;;
+            *) echo "BASE_PATH=/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV" ;;
+          esac
       - name: Build
         run: npm run build
         env:
           SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
-          # user/org site (<owner>.github.io repo) -> no base path; project site -> /<repo>
-          BASE_PATH: ${{ endsWith(github.repository, '.github.io') && '' || format('/{0}', github.event.repository.name) }}
       - uses: actions/upload-pages-artifact@v3
         with: { path: out }
   deploy:
